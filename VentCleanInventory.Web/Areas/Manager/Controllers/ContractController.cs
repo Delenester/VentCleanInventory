@@ -48,65 +48,66 @@ public class ContractController(
         var clientPhone = clientUser?.PhoneNumber ?? "_________________";
 
         var doc = DocX.Create($"{contractNumber}.docx");
-
         doc.MarginLeft = 60f;
-        doc.MarginRight = 40f;
-        doc.MarginTop = 40f;
-        doc.MarginBottom = 40f;
+        doc.MarginRight = 60f;
+        doc.MarginTop = 50f;
+        doc.MarginBottom = 50f;
 
+        // ── Title ──
         doc.InsertParagraph("ДОГОВОР")
             .FontSize(16).Bold().Alignment = Alignment.center;
         doc.InsertParagraph("на выполнение работ по чистке и обслуживанию вентиляционных систем")
-            .FontSize(13).Bold().Alignment = Alignment.center;
+            .FontSize(13).Alignment = Alignment.center;
+        doc.InsertParagraph();
         doc.InsertParagraph($"№ {contractNumber}")
             .FontSize(12).Alignment = Alignment.center;
         doc.InsertParagraph();
-        doc.InsertParagraph($"г. Минск                                                                        {date} г.")
-            .FontSize(11).Alignment = Alignment.left;
-        doc.InsertParagraph();
 
+        // ── City / Date line ──
+        var dtLine = doc.InsertParagraph();
+        dtLine.Append("г. ").FontSize(11);
+        dtLine.Append("Минск").FontSize(11).UnderlineStyle(Xceed.Document.NET.UnderlineStyle.singleLine);
+        dtLine.Append($"\t\t{date} г.").FontSize(11);
+        dtLine.SpacingAfter(10);
+
+        // ── Parties block ──
         doc.InsertParagraph(
-            $"Общество с ограниченной ответственностью «VentClean», УНП 123456789, " +
-            $"юридический адрес: 220000, г. Минск, ул. Примерная, д. 1, " +
-            $"р/с BY12NBRB36009000000000000000 в «Белгазпромбанк» ОАО, " +
-            $"в лице Директора Иванова И.И., действующего на основании Устава, " +
-            $"именуемое в дальнейшем «Исполнитель», с одной стороны, и")
-            .FontSize(11).IndentationFirstLine = 1.27f;
-        doc.InsertParagraph(
-            $"{clientOrg?.Name ?? "Заказчик"}, УНП {clientOrg?.Unp ?? ""}, " +
-            $"юридический адрес: {clientOrg?.LegalAddress ?? ""}, " +
-            $"р/с {clientBankAccount}" +
-            $"{(string.IsNullOrWhiteSpace(clientBankName) ? "" : $", банк {clientBankName}")}, " +
-            $"тел. {clientPhone}, " +
-            $"в лице руководителя, действующего на основании Устава, " +
-            $"именуемое в дальнейшем «Заказчик», с другой стороны, " +
-            $"заключили настоящий договор о нижеследующем:")
+            "Общество с ограниченной ответственностью «VentClean», именуемое в дальнейшем «Исполнитель», " +
+            "в лице Директора Иванова И.И., действующего на основании Устава, с одной стороны, и")
             .FontSize(11).IndentationFirstLine = 1.27f;
 
-        // 1. ПРЕДМЕТ ДОГОВОРА
-        doc.InsertParagraph();
-        doc.InsertParagraph("1. ПРЕДМЕТ ДОГОВОРА").Bold().FontSize(12);
+        var p = doc.InsertParagraph();
+        p.Append(clientOrg?.Name ?? "Заказчик").FontSize(11).Bold();
+        p.Append(", именуемое в дальнейшем «Заказчик», в лице руководителя, действующего на основании Устава, с другой стороны, заключили настоящий договор о нижеследующем:").FontSize(11);
+        p.IndentationFirstLine = 1.27f;
+        p.SpacingAfter(8);
+
+        // ── 1. ПРЕДМЕТ ДОГОВОРА ──
+        doc.InsertParagraph("1. ПРЕДМЕТ ДОГОВОРА").Bold().FontSize(12).SpacingBefore(12);
         doc.InsertParagraph(
             "1.1. Исполнитель обязуется по заданию Заказчика выполнить работы по чистке, промывке " +
             "и обслуживанию вентиляционных систем и воздуховодов (далее — Работы), а Заказчик обязуется " +
-            "принять и оплатить выполненные Работы.")
+            "принять результат Работ и оплатить его.")
             .FontSize(11).IndentationFirstLine = 1.27f;
-        doc.InsertParagraph(
-            $"1.2. Объект Работ: «{objectName}», расположенный по адресу: {address}.")
+        var p12 = doc.InsertParagraph();
+        p12.Append("1.2. Объект Работ: «").FontSize(11);
+        p12.Append(objectName).FontSize(11).UnderlineStyle(Xceed.Document.NET.UnderlineStyle.singleLine);
+        p12.Append("» по адресу: ").FontSize(11);
+        p12.Append(address).FontSize(11).UnderlineStyle(Xceed.Document.NET.UnderlineStyle.singleLine);
+        p12.Append(".").FontSize(11);
+        p12.IndentationFirstLine = 1.27f;
+        doc.InsertParagraph($"1.3. Вид Работ: {serviceType}.")
             .FontSize(11).IndentationFirstLine = 1.27f;
-        doc.InsertParagraph(
-            $"1.3. Вид Работ: {serviceType}.")
-            .FontSize(11).IndentationFirstLine = 1.27f;
-        doc.InsertParagraph(
-            $"1.4. Характеристики объекта: площадь обслуживаемых поверхностей — {area:N2} м².")
+        doc.InsertParagraph($"1.4. Характеристики объекта: площадь обслуживаемых поверхностей — {area:N2} м².")
             .FontSize(11).IndentationFirstLine = 1.27f;
 
-        // 2. ЦЕНА И ПОРЯДОК РАСЧЕТОВ
-        doc.InsertParagraph();
-        doc.InsertParagraph("2. ЦЕНА ДОГОВОРА И ПОРЯДОК РАСЧЕТОВ").Bold().FontSize(12);
-        doc.InsertParagraph(
-            $"2.1. Стоимость Работ по настоящему договору составляет {cost:N2} ({NumberToWords(cost)}) рублей.")
-            .FontSize(11).IndentationFirstLine = 1.27f;
+        // ── 2. ЦЕНА ДОГОВОРА И ПОРЯДОК РАСЧЁТОВ ──
+        doc.InsertParagraph("2. ЦЕНА ДОГОВОРА И ПОРЯДОК РАСЧЁТОВ").Bold().FontSize(12).SpacingBefore(12);
+        var p21 = doc.InsertParagraph();
+        p21.Append("2.1. Стоимость Работ составляет ").FontSize(11);
+        p21.Append($"{cost:N2}").FontSize(11).Bold();
+        p21.Append($" ({NumberToWords(cost)}) рублей.").FontSize(11);
+        p21.IndentationFirstLine = 1.27f;
         doc.InsertParagraph(
             "2.2. Оплата производится в течение 5 (пяти) банковских дней с даты подписания " +
             "сторонами акта сдачи-приёмки выполненных Работ.")
@@ -118,49 +119,51 @@ public class ContractController(
             "2.4. Датой оплаты считается дата поступления денежных средств на расчётный счёт Исполнителя.")
             .FontSize(11).IndentationFirstLine = 1.27f;
 
-        // 3. СРОКИ ВЫПОЛНЕНИЯ РАБОТ
-        doc.InsertParagraph();
-        doc.InsertParagraph("3. СРОКИ ВЫПОЛНЕНИЯ РАБОТ").Bold().FontSize(12);
-        doc.InsertParagraph(
-            $"3.1. Дата начала Работ: {startDate}.")
-            .FontSize(11).IndentationFirstLine = 1.27f;
-        doc.InsertParagraph(
-            $"3.2. Дата окончания Работ: {endDate}.")
-            .FontSize(11).IndentationFirstLine = 1.27f;
+        // ── 3. СРОКИ ВЫПОЛНЕНИЯ РАБОТ ──
+        doc.InsertParagraph("3. СРОКИ ВЫПОЛНЕНИЯ РАБОТ").Bold().FontSize(12).SpacingBefore(12);
+        var p31 = doc.InsertParagraph();
+        p31.Append("3.1. Начало Работ: ").FontSize(11);
+        p31.Append(startDate).FontSize(11).UnderlineStyle(Xceed.Document.NET.UnderlineStyle.singleLine);
+        p31.Append(".").FontSize(11);
+        p31.IndentationFirstLine = 1.27f;
+        var p32 = doc.InsertParagraph();
+        p32.Append("3.2. Окончание Работ: ").FontSize(11);
+        p32.Append(endDate).FontSize(11).UnderlineStyle(Xceed.Document.NET.UnderlineStyle.singleLine);
+        p32.Append(".").FontSize(11);
+        p32.IndentationFirstLine = 1.27f;
         doc.InsertParagraph(
             "3.3. Досрочное выполнение Работ допускается по согласованию Сторон.")
             .FontSize(11).IndentationFirstLine = 1.27f;
 
-        // 4. ПРАВА И ОБЯЗАННОСТИ СТОРОН
-        doc.InsertParagraph();
-        doc.InsertParagraph("4. ПРАВА И ОБЯЗАННОСТИ СТОРОН").Bold().FontSize(12);
+        // ── 4. ПРАВА И ОБЯЗАННОСТИ СТОРОН ──
+        doc.InsertParagraph("4. ПРАВА И ОБЯЗАННОСТИ СТОРОН").Bold().FontSize(12).SpacingBefore(12);
         doc.InsertParagraph(
             "4.1. Исполнитель обязуется:")
             .FontSize(11);
         doc.InsertParagraph(
-            "  4.1.1. Выполнить Работы качественно, в объёме и в сроки, предусмотренные настоящим договором;")
+            "  — выполнить Работы качественно, в объёме и в сроки, предусмотренные настоящим договором;")
             .FontSize(11).IndentationFirstLine = 1.27f;
         doc.InsertParagraph(
-            "  4.1.2. Обеспечить соблюдение требований техники безопасности и пожарной безопасности " +
+            "  — обеспечить соблюдение требований техники безопасности и пожарной безопасности " +
             "при выполнении Работ;")
             .FontSize(11).IndentationFirstLine = 1.27f;
         doc.InsertParagraph(
-            "  4.1.3. Предоставить Заказчику акт сдачи-приёмки выполненных Работ по завершении Работ;")
+            "  — предоставить Заказчику акт сдачи-приёмки выполненных Работ по завершении Работ;")
             .FontSize(11).IndentationFirstLine = 1.27f;
         doc.InsertParagraph(
-            "  4.1.4. Устранить выявленные недостатки за свой счёт в согласованные сроки.")
+            "  — устранить выявленные недостатки за свой счёт в согласованные сроки.")
             .FontSize(11).IndentationFirstLine = 1.27f;
         doc.InsertParagraph(
             "4.2. Заказчик обязуется:")
             .FontSize(11);
         doc.InsertParagraph(
-            "  4.2.1. Обеспечить доступ Исполнителя на объект для выполнения Работ;")
+            "  — обеспечить доступ Исполнителя на объект для выполнения Работ;")
             .FontSize(11).IndentationFirstLine = 1.27f;
         doc.InsertParagraph(
-            "  4.2.2. Принять выполненные Работы и подписать акт сдачи-приёмки;")
+            "  — принять выполненные Работы и подписать акт сдачи-приёмки;")
             .FontSize(11).IndentationFirstLine = 1.27f;
         doc.InsertParagraph(
-            "  4.2.3. Оплатить Работы в порядке и сроки, предусмотренные настоящим договором.")
+            "  — оплатить Работы в порядке и сроки, предусмотренные настоящим договором.")
             .FontSize(11).IndentationFirstLine = 1.27f;
         doc.InsertParagraph(
             "4.3. Исполнитель вправе не приступать к Работам, а начатые Работы приостановить " +
@@ -171,9 +174,8 @@ public class ContractController(
             "без вмешательства в оперативно-хозяйственную деятельность Исполнителя.")
             .FontSize(11).IndentationFirstLine = 1.27f;
 
-        // 5. ОТВЕТСТВЕННОСТЬ СТОРОН
-        doc.InsertParagraph();
-        doc.InsertParagraph("5. ОТВЕТСТВЕННОСТЬ СТОРОН").Bold().FontSize(12);
+        // ── 5. ОТВЕТСТВЕННОСТЬ СТОРОН ──
+        doc.InsertParagraph("5. ОТВЕТСТВЕННОСТЬ СТОРОН").Bold().FontSize(12).SpacingBefore(12);
         doc.InsertParagraph(
             "5.1. Исполнитель гарантирует качество выполненных Работ в течение 12 (двенадцати) месяцев " +
             "с даты подписания акта сдачи-приёмки выполненных Работ.")
@@ -192,9 +194,8 @@ public class ContractController(
             "от неоплаченной суммы за каждый день просрочки.")
             .FontSize(11).IndentationFirstLine = 1.27f;
 
-        // 6. ПОРЯДОК ИЗМЕНЕНИЯ И РАСТОРЖЕНИЯ ДОГОВОРА
-        doc.InsertParagraph();
-        doc.InsertParagraph("6. ИЗМЕНЕНИЕ И РАСТОРЖЕНИЕ ДОГОВОРА").Bold().FontSize(12);
+        // ── 6. ИЗМЕНЕНИЕ И РАСТОРЖЕНИЕ ДОГОВОРА ──
+        doc.InsertParagraph("6. ИЗМЕНЕНИЕ И РАСТОРЖЕНИЕ ДОГОВОРА").Bold().FontSize(12).SpacingBefore(12);
         doc.InsertParagraph(
             "6.1. Все изменения и дополнения к настоящему договору действительны, если совершены " +
             "в письменной форме и подписаны уполномоченными представителями Сторон.")
@@ -209,9 +210,8 @@ public class ContractController(
             "Заказчик оплачивает Исполнителю стоимость фактически выполненных Работ.")
             .FontSize(11).IndentationFirstLine = 1.27f;
 
-        // 7. ФОРС-МАЖОР
-        doc.InsertParagraph();
-        doc.InsertParagraph("7. ФОРС-МАЖОР").Bold().FontSize(12);
+        // ── 7. ФОРС-МАЖОР ──
+        doc.InsertParagraph("7. ФОРС-МАЖОР").Bold().FontSize(12).SpacingBefore(12);
         doc.InsertParagraph(
             "7.1. Стороны освобождаются от ответственности за полное или частичное неисполнение " +
             "обязательств по настоящему договору, если это вызвано обстоятельствами непреодолимой силы, " +
@@ -222,20 +222,18 @@ public class ContractController(
             "другую Сторону в течение 5 (пяти) календарных дней с момента их возникновения.")
             .FontSize(11).IndentationFirstLine = 1.27f;
 
-        // 8. ПОРЯДОК РАЗРЕШЕНИЯ СПОРОВ
-        doc.InsertParagraph();
-        doc.InsertParagraph("8. РАЗРЕШЕНИЕ СПОРОВ").Bold().FontSize(12);
+        // ── 8. РАЗРЕШЕНИЕ СПОРОВ ──
+        doc.InsertParagraph("8. РАЗРЕШЕНИЕ СПОРОВ").Bold().FontSize(12).SpacingBefore(12);
         doc.InsertParagraph(
             "8.1. Все споры и разногласия разрешаются путём переговоров Сторон.")
             .FontSize(11).IndentationFirstLine = 1.27f;
         doc.InsertParagraph(
-            "8.2. При недостижении согласия споры передаются на рассмотрение в Экономический суд " +
+            "8.2. При недостижении согласия спор передаётся на рассмотрение в Экономический суд " +
             "г. Минска в порядке, установленном законодательством Республики Беларусь.")
             .FontSize(11).IndentationFirstLine = 1.27f;
 
-        // 9. ПРОЧИЕ УСЛОВИЯ
-        doc.InsertParagraph();
-        doc.InsertParagraph("9. ЗАКЛЮЧИТЕЛЬНЫЕ ПОЛОЖЕНИЯ").Bold().FontSize(12);
+        // ── 9. ЗАКЛЮЧИТЕЛЬНЫЕ ПОЛОЖЕНИЯ ──
+        doc.InsertParagraph("9. ЗАКЛЮЧИТЕЛЬНЫЕ ПОЛОЖЕНИЯ").Bold().FontSize(12).SpacingBefore(12);
         doc.InsertParagraph(
             "9.1. Настоящий договор вступает в силу с даты его подписания Сторонами и действует " +
             "до полного исполнения Сторонами своих обязательств.")
@@ -249,53 +247,66 @@ public class ContractController(
             "действующим законодательством Республики Беларусь.")
             .FontSize(11).IndentationFirstLine = 1.27f;
 
-        // 10. ЮРИДИЧЕСКИЕ АДРЕСА И РЕКВИЗИТЫ СТОРОН
-        doc.InsertParagraph();
-        doc.InsertParagraph("10. ЮРИДИЧЕСКИЕ АДРЕСА И РЕКВИЗИТЫ СТОРОН").Bold().FontSize(12);
-        doc.InsertParagraph();
+        // ── 10. ЮРИДИЧЕСКИЕ АДРЕСА И РЕКВИЗИТЫ СТОРОН ──
+        doc.InsertParagraph("10. ЮРИДИЧЕСКИЕ АДРЕСА И РЕКВИЗИТЫ СТОРОН")
+            .Bold().FontSize(12).SpacingBefore(12).SpacingAfter(6);
 
-        var table = doc.AddTable(6, 2);
-        table.Design = TableDesign.TableGrid;
-        table.Alignment = Alignment.center;
-        table.SetWidths(new float[] { 300f, 300f });
-        table.Rows[0].Cells[0].Paragraphs[0].Append("ИСПОЛНИТЕЛЬ").Bold();
-        table.Rows[0].Cells[0].Paragraphs[0].Alignment = Alignment.center;
-        table.Rows[0].Cells[1].Paragraphs[0].Append("ЗАКАЗЧИК").Bold();
-        table.Rows[0].Cells[1].Paragraphs[0].Alignment = Alignment.center;
-        table.Rows[1].Cells[0].Paragraphs[0].Append("ООО «VentClean»");
-        table.Rows[1].Cells[1].Paragraphs[0].Append(clientOrg?.Name ?? "");
-        table.Rows[2].Cells[0].Paragraphs[0].Append("УНП 123456789");
-        table.Rows[2].Cells[1].Paragraphs[0].Append($"УНП {clientOrg?.Unp ?? ""}");
-        table.Rows[3].Cells[0].Paragraphs[0].Append("220000, г. Минск, ул. Примерная, д. 1");
-        table.Rows[3].Cells[1].Paragraphs[0].Append(clientOrg?.LegalAddress ?? "");
-        table.Rows[4].Cells[0].Paragraphs[0].Append("р/с BY12NBRB36009000000000000000");
-        table.Rows[4].Cells[1].Paragraphs[0].Append(clientBankAccount);
-        table.Rows[5].Cells[0].Paragraphs[0].Append("«Белгазпромбанк» ОАО");
-        table.Rows[5].Cells[1].Paragraphs[0].Append(clientBankName);
-        doc.InsertTable(table);
+        var addrTable = doc.AddTable(7, 2);
+        addrTable.Design = TableDesign.TableGrid;
+        addrTable.Alignment = Alignment.center;
+        addrTable.SetWidths(new float[] { 300f, 300f });
 
-        // 11. ПОДПИСИ СТОРОН
-        doc.InsertParagraph();
-        doc.InsertParagraph("11. ПОДПИСИ СТОРОН").Bold().FontSize(12);
-        doc.InsertParagraph();
+        void WriteCell(int row, int col, string label, string value)
+        {
+            var cell = addrTable.Rows[row].Cells[col];
+            cell.Paragraphs[0].Append(label).Bold().FontSize(10);
+            cell.Paragraphs[0].Append("\n" + value).FontSize(10);
+        }
+
+        WriteCell(0, 0, "ИСПОЛНИТЕЛЬ:", "ООО «VentClean»");
+        WriteCell(0, 1, "ЗАКАЗЧИК:", clientOrg?.Name ?? "");
+        WriteCell(1, 0, "УНП:", "123456789");
+        WriteCell(1, 1, "УНП:", clientOrg?.Unp ?? "");
+        WriteCell(2, 0, "Юр. адрес:", "220000, г. Минск, ул. Примерная, д. 1");
+        WriteCell(2, 1, "Юр. адрес:", clientOrg?.LegalAddress ?? "");
+        WriteCell(3, 0, "Р/с:", "BY12NBRB36009000000000000000");
+        WriteCell(3, 1, "Р/с:", clientBankAccount);
+        WriteCell(4, 0, "Банк:", "«Белгазпромбанк» ОАО");
+        WriteCell(4, 1, "Банк:", clientBankName);
+        WriteCell(5, 0, "Тел.:", "+375 29 111-22-33");
+        WriteCell(5, 1, "Тел.:", clientPhone);
+        WriteCell(6, 0, "E-mail:", "info@ventclean.by");
+        WriteCell(6, 1, "E-mail:", clientUser?.Email ?? "");
+        doc.InsertTable(addrTable);
+
+        // ── 11. ПОДПИСИ СТОРОН ──
+        doc.InsertParagraph("11. ПОДПИСИ СТОРОН")
+            .Bold().FontSize(12).SpacingBefore(14).SpacingAfter(6);
 
         var sigTable = doc.AddTable(4, 2);
         sigTable.Design = TableDesign.TableGrid;
         sigTable.Alignment = Alignment.center;
         sigTable.SetWidths(new float[] { 300f, 300f });
-        sigTable.Rows[0].Cells[0].Paragraphs[0].Append("ИСПОЛНИТЕЛЬ").Bold();
-        sigTable.Rows[0].Cells[0].Paragraphs[0].Alignment = Alignment.center;
-        sigTable.Rows[0].Cells[1].Paragraphs[0].Append("ЗАКАЗЧИК").Bold();
-        sigTable.Rows[0].Cells[1].Paragraphs[0].Alignment = Alignment.center;
-        sigTable.Rows[1].Cells[0].Paragraphs[0].Append("Директор");
-        sigTable.Rows[1].Cells[1].Paragraphs[0].Append("Руководитель");
-        sigTable.Rows[2].Cells[0].Paragraphs[0].Append("_________ / Иванов И.И. /");
-        sigTable.Rows[2].Cells[1].Paragraphs[0].Append("_________ / _____________ /");
-        sigTable.Rows[3].Cells[0].Paragraphs[0].Append("М.П.");
-        sigTable.Rows[3].Cells[0].Paragraphs[0].Alignment = Alignment.center;
-        sigTable.Rows[3].Cells[1].Paragraphs[0].Append("М.П.");
-        sigTable.Rows[3].Cells[1].Paragraphs[0].Alignment = Alignment.center;
+        void SigCell(int row, int col, string text, bool bold = false, bool center = false)
+        {
+            var p2 = sigTable.Rows[row].Cells[col].Paragraphs[0];
+            p2.Append(text).FontSize(10);
+            if (bold) p2.Bold();
+            if (center) p2.Alignment = Alignment.center;
+        }
+        SigCell(0, 0, "ИСПОЛНИТЕЛЬ", bold: true, center: true);
+        SigCell(0, 1, "ЗАКАЗЧИК", bold: true, center: true);
+        SigCell(1, 0, "Директор");
+        SigCell(1, 1, "Руководитель");
+        SigCell(2, 0, "_________ / Иванов И.И. /");
+        SigCell(2, 1, "_________ / _____________ /");
+        SigCell(3, 0, "М.П.", center: true);
+        SigCell(3, 1, "М.П.", center: true);
         doc.InsertTable(sigTable);
+
+        // ── Footer ──
+        doc.InsertParagraph("Договор составлен в двух экземплярах, имеющих одинаковую юридическую силу.")
+            .FontSize(10).Italic().Alignment = Alignment.center;
 
         var stream = new MemoryStream();
         doc.SaveAs(stream);
