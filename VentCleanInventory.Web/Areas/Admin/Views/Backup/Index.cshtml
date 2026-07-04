@@ -1,0 +1,50 @@
+@{
+    ViewData["Title"] = "Резервное копирование БД";
+    var info = TempData["Info"] as string;
+}
+
+@if (!string.IsNullOrWhiteSpace(info))
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle me-2"></i>@info
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<div class="page-header">
+    <div class="d-flex align-items-center gap-2">
+        <a asp-area="Admin" asp-controller="AdminHome" asp-action="Index" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i>
+        </a>
+        <h1 class="m-0">@ViewData["Title"]</h1>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="bi bi-hdd me-2"></i>Создание бэкапа
+            </div>
+            <div class="card-body">
+                <p class="text-muted mb-3">
+                    Создаст резервную копию базы данных VentCleanInventory в указанном каталоге.
+                </p>
+                <form asp-action="Run" method="post">
+                    @Html.AntiForgeryToken()
+                    <div class="mb-3">
+                        <label class="form-label">Каталог для .bak</label>
+                        <input type="text" name="directoryPath" class="form-control" placeholder="C:\Backups" value="@AppContext.BaseDirectory" />
+                    </div>
+                    <button type="submit" class="btn btn-outline-danger w-100" onclick="return confirm('Создать резервную копию БД сейчас?');">
+                        <i class="bi bi-cloud-arrow-up me-1"></i>Создать бэкап
+                    </button>
+                </form>
+                <small class="text-muted d-block mt-3">
+                    <i class="bi bi-info-circle me-1"></i>
+                    Примечание: для выполнения BACKUP DATABASE у SQL Server нужны права и доступ к каталогу.
+                </small>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,43 @@
+@model IReadOnlyList<VentCleanInventory.Web.Data.ApplicationUser>
+@{
+    ViewData["Title"] = "Клиенты";
+}
+
+<div class="page-header">
+    <h1 class="m-0">@ViewData["Title"]</h1>
+    <p class="text-muted mb-0 mt-1">Информация о зарегистрированных клиентах</p>
+</div>
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>ФИО</th>
+                    <th>Email</th>
+                    <th>Организация</th>
+                    <th>Договор</th>
+                    <th>Телефон</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var c in Model)
+                {
+                    <tr>
+                        <td>@c.FullName</td>
+                        <td>@c.Email</td>
+                        <td class="small">@(c.Organization?.Name ?? "—")</td>
+                        <td>@(c.ContractNumber ?? "—")</td>
+                        <td>@(c.PhoneContact ?? "—")</td>
+                        <td>
+                            <a asp-action="Details" asp-route-id="@c.Id" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-eye"></i> Подробнее
+                            </a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

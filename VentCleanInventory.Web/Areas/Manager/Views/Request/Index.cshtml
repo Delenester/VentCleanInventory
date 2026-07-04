@@ -1,0 +1,96 @@
+@model IReadOnlyList<VentCleanInventory.Web.Data.Entities.StockTransaction>
+@using VentCleanInventory.Web.Data
+
+@{
+    ViewData["Title"] = "Заявки на обслуживание";
+    var userNames = ViewBag.UserNames as Dictionary<string, string> ?? new();
+}
+
+<div class="page-header">
+    <div class="d-flex align-items-center justify-content-between">
+        <div>
+            <h1 class="m-0">@ViewData["Title"]</h1>
+            <p class="text-muted mb-0 mt-1">Одобрение и калькуляция заявок клиентов</p>
+        </div>
+    </div>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show">
+        <i class="bi bi-check-circle me-2"></i>@TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+@if (TempData["Info"] != null)
+{
+    <div class="alert alert-info alert-dismissible fade show">
+        <i class="bi bi-info-circle me-2"></i>@TempData["Info"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>№</th>
+                    <th>Клиент</th>
+                    <th>Объект</th>
+                    <th>Дата</th>
+                    <th>Статус</th>
+                    <th>Стоимость</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Any())
+                {
+                    <tr><td colspan="7" class="text-muted text-center py-4">Нет заявок</td></tr>
+                }
+                @foreach (var r in Model)
+                {
+                    <tr class="@(r.RequestStatusValue == RequestStatus.Approved ? "table-success" : "")">
+                        <td class="fw-semibold">@r.Id</td>
+                        <td>@(userNames.GetValueOrDefault(r.UserId, r.UserId))</td>
+                        <td>@(r.WorkObject?.Name ?? "—")</td>
+                        <td>@r.Date.ToString("dd.MM.yyyy")</td>
+                        <td>
+                                @switch (r.RequestStatusValue)
+                                {
+                                    case RequestStatus.New:
+                                        <span class="badge bg-warning text-dark">Новая</span>
+                                        break;
+                                    case RequestStatus.Approved:
+                                        <span class="badge bg-success">Одобрена</span>
+                                        break;
+                                    case RequestStatus.ClientConfirmed:
+                                        <span class="badge bg-info text-dark">Подтверждена</span>
+                                        break;
+                                    case RequestStatus.Assigned:
+                                        <span class="badge bg-primary">Назначена</span>
+                                        break;
+                                    case RequestStatus.InProgress:
+                                        <span class="badge bg-secondary">В работе</span>
+                                        break;
+                                    case RequestStatus.Completed:
+                                        <span class="badge bg-secondary">Выполнена</span>
+                                        break;
+                                    case RequestStatus.Rejected:
+                                        <span class="badge bg-danger">Отклонена</span>
+                                        break;
+                                }
+                        </td>
+                        <td>@(r.EstimatedCost?.ToString("N2") ?? "—")</td>
+                        <td>
+                            <a asp-action="Details" asp-route-id="@r.Id" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-eye"></i> Подробнее
+                            </a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

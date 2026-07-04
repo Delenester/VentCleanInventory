@@ -1,0 +1,143 @@
+@model IEnumerable<VentCleanInventory.Web.Data.Entities.WorkChecklist>
+
+@{
+    ViewData["Title"] = "Чек-лист работы";
+    var log = ViewBag.WorkLog as VentCleanInventory.Web.Data.Entities.WorkLog;
+}
+
+<style>
+    .checklist-photo-input { max-width: 110px; font-size: 0.75rem; }
+    .checklist-photo-btn { cursor: pointer; }
+    .checklist-photo-preview { max-height: 50px; margin-top: 4px; border-radius: 4px; }
+    .upload-status { font-size: 0.7rem; margin-top: 2px; }
+    .upload-ok { color: #198754; }
+    .upload-err { color: #dc3545; }
+</style>
+
+<div class="page-header">
+    <h1 class="m-0">@ViewData["Title"]</h1>
+    <p class="text-muted mb-0 mt-1">@log?.WorkObject?.Name — @log?.WorkDate.ToString("dd.MM.yyyy")</p>
+</div>
+
+@if (TempData["Success"] is string success)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @success
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<div class="card mb-4">
+    <div class="card-body">
+        @if (!string.IsNullOrWhiteSpace(log?.ZoneName))
+        {
+            <div class="mb-2"><i class="bi bi-geo-alt"></i> Зона: <strong>@log.ZoneName</strong></div>
+        }
+        @if (log?.Meters.HasValue == true)
+        {
+            <div class="mb-2"><i class="bi bi-rulers"></i> Метры: <strong>@log.Meters.Value.ToString("N2") м</strong></div>
+        }
+        @if (log?.Grids.HasValue == true)
+        {
+            <div class="mb-2"><i class="bi bi-grid-3x3"></i> Решётки: <strong>@log.Grids решёт.</strong></div>
+        }
+    </div>
+</div>
+
+<form asp-area="Master" asp-controller="Checklist" asp-action="Save" method="post">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="workLogId" value="@log?.Id" />
+
+    <div class="card">
+        <div class="card-header"><i class="bi bi-list-check me-1"></i>Пункты чек-листа</div>
+        <div class="card-body p-0">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th style="width:50px;"></th>
+                        <th>Пункт</th>
+                        <th>Примечание</th>
+                        <th style="width:160px;">Фото</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td class="text-center align-middle">
+                                <div class="form-check mb-0">
+                                    <input class="form-check-input" type="checkbox" name="checks[@item.Id]" value="true"
+                                           @(item.IsDone ? "checked" : "") />
+                                </div>
+                            </td>
+                            <td class="align-middle">
+                                @item.ItemName
+                                @if (item.IsDone)
+                                {
+                                    <span class="badge bg-success ms-2">Выполнено</span>
+                                }
+                            </td>
+                            <td>
+                                <input type="text" class="form-control form-control-sm" name="notes[@item.Id]"
+                                       value="@item.Note" placeholder="Примечание..." />
+                            </td>
+                            <td class="text-center">
+                                <input type="file" id="photo-@item.Id" accept=".jpg,.jpeg,.png"
+                                       class="form-control form-control-sm checklist-photo-input"
+                                       onchange="uploadChecklistPhoto(@item.Id)" />
+                                <div id="status-@item.Id" class="upload-status"></div>
+                                @if (!string.IsNullOrWhiteSpace(item.PhotoPath))
+                                {
+                                    <a href="@item.PhotoPath" target="_blank">
+                                        <img src="@item.PhotoPath" class="checklist-photo-preview" alt="Фото" />
+                                    </a>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        <div class="card-footer d-flex justify-content-between">
+            <a asp-area="Master" asp-controller="MyWork" asp-action="Index" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Назад
+            </a>
+            <button type="submit" class="btn btn-primary">
+                <i class="bi bi-save"></i> Сохранить чек-лист
+            </button>
+        </div>
+    </div>
+</form>
+
+@section Scripts {
+    <script>
+        var token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+        function uploadChecklistPhoto(id) {
+            var input = document.getElementById('photo-' + id);
+            var status = document.getElementById('status-' + id);
+            if (!input.files || !input.files[0]) return;
+
+            status.innerHTML = '<span class="text-muted">Загрузка...</span>';
+
+            var formData = new FormData();
+            formData.append('id', id);
+            formData.append('photo', input.files[0]);
+            formData.append('__RequestVerificationToken', token);
+
+            fetch('/Master/Checklist/UploadChecklistPhoto', {
+                method: 'POST',
+                body: formData
+            }).then(function (r) {
+                if (r.redirected) {
+                    status.innerHTML = '<span class="upload-ok">Готово</span>';
+                    setTimeout(function () { location.reload(); }, 500);
+                } else {
+                    status.innerHTML = '<span class="upload-err">Ошибка</span>';
+                }
+            }).catch(function () {
+                status.innerHTML = '<span class="upload-err">Ошибка сети</span>';
+            });
+        }
+    </script>
+}

@@ -1,0 +1,83 @@
+@model VentCleanInventory.Web.Areas.Supplier.Models.SupplierSuppliesViewModel
+
+@{
+    ViewData["Title"] = "Мои поставки";
+}
+
+<div class="page-header d-flex align-items-center gap-2">
+    <a asp-area="Supplier" asp-controller="SupplierHome" asp-action="Index" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i>
+    </a>
+    <h1 class="m-0">@ViewData["Title"]</h1>
+</div>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-12 col-md-4">
+                <label class="form-label">От</label>
+                <input type="date" name="from" class="form-control" value="@Model.From.ToString("yyyy-MM-dd")" />
+            </div>
+            <div class="col-12 col-md-4">
+                <label class="form-label">До</label>
+                <input type="date" name="to" class="form-control" value="@Model.To.ToString("yyyy-MM-dd")" />
+            </div>
+            <div class="col-12 col-md-4 d-grid align-self-end">
+                <button type="submit" class="btn btn-outline-primary"><i class="bi bi-filter me-1"></i>Показать</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        @if (!Model.Rows.Any())
+        {
+            <div class="alert alert-info">Нет поставок за выбранный период.</div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>Дата</th>
+                            <th>Тип операции</th>
+                            <th>Позиций</th>
+                            <th class="text-end">Общее кол-во</th>
+                            <th>Примечание</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var r in Model.Rows)
+                        {
+                            <tr>
+                                <td>@r.Date.ToString("dd.MM.yyyy HH:mm")</td>
+                                <td>
+                                    @switch (r.TransactionType)
+                                    {
+                                        case TransactionType.Receipt: <span class="badge bg-success">Поступление</span> break;
+                                        case TransactionType.Return: <span class="badge bg-info">Возврат</span> break;
+                                        case TransactionType.Issue: <span class="badge bg-warning">Выдача</span> break;
+                                        case TransactionType.WriteOff: <span class="badge bg-danger">Списание</span> break;
+                                        default: <span>@r.TransactionType</span> break;
+                                    }
+                                </td>
+                                <td>@r.ItemCount</td>
+                                <td class="text-end">@r.TotalQuantity.ToString("N1")</td>
+                                <td>@(r.Note ?? "—")</td>
+                            </tr>
+                        }
+                    </tbody>
+                    <tfoot>
+                        <tr class="fw-bold">
+                            <td colspan="3">Итого</td>
+                            <td class="text-end">@Model.TotalQuantity.ToString("N1")</td>
+                            <td></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        }
+    </div>
+</div>

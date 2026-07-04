@@ -1,0 +1,58 @@
+@model VentCleanInventory.Web.Areas.Master.Models.Profile.ProfileViewModel
+
+@{
+    ViewData["Title"] = "Профиль";
+}
+
+<div class="page-header">
+    <div class="d-flex align-items-center gap-2">
+        <a asp-area="Master" asp-controller="MasterHome" asp-action="Index" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i>
+        </a>
+        <h1 class="m-0">@ViewData["Title"]</h1>
+    </div>
+</div>
+
+@if (TempData["Info"] is string info)
+{
+    <div class="alert alert-success">@info</div>
+}
+
+<div class="row g-4">
+    <div class="col-12 col-md-4 text-center">
+        <div class="card">
+            <div class="card-body">
+                @if (!string.IsNullOrWhiteSpace(Model.PhotoPath))
+                {
+                    <img src="@Model.PhotoPath" alt="Фото" class="rounded-circle mb-3" style="width: 150px; height: 150px; object-fit: cover;" />
+                }
+                else
+                {
+                    <div class="rounded-circle bg-light d-inline-flex align-items-center justify-content-center mb-3" style="width: 150px; height: 150px;">
+                        <i class="bi bi-person" style="font-size: 4rem; color: #adb5bd;"></i>
+                    </div>
+                }
+                <div class="fw-semibold">@Model.FullName</div>
+                <div class="text-muted small">@Model.Email</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-md-8">
+        <div class="card">
+            <div class="card-header">Загрузить фото</div>
+            <div class="card-body">
+                <form asp-action="Index" method="post" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label asp-for="Photo" class="form-label"></label>
+                        <input asp-for="Photo" type="file" accept="image/jpeg,image/png" class="form-control" capture="user" />
+                        <span asp-validation-for="Photo" class="text-danger"></span>
+                        <small class="text-muted">JPEG или PNG, до 5 МБ.</small>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-upload me-1"></i>Сохранить фото
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,62 @@
+@model VentCleanInventory.Web.Areas.Client.Models.WorkLogSummary
+@{
+    ViewData["Title"] = "Детали работы";
+}
+
+<div class="page-header d-flex align-items-center gap-2">
+    <a asp-area="Client" asp-controller="ClientHome" asp-action="Index" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i>
+    </a>
+    <h1 class="m-0">@ViewData["Title"]</h1>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-6">
+                <div class="text-muted small">Объект</div>
+                <div class="fw-semibold">@Model.ObjectName</div>
+            </div>
+            <div class="col-md-6">
+                <div class="text-muted small">Дата</div>
+                <div class="fw-semibold">@Model.WorkDate.ToString("dd.MM.yyyy HH:mm")</div>
+            </div>
+            <div class="col-md-6">
+                <div class="text-muted small">Зона</div>
+                <div class="fw-semibold">@(Model.ZoneName ?? "—")</div>
+            </div>
+            <div class="col-md-6">
+                <div class="text-muted small">Мастер</div>
+                <div class="fw-semibold">@Model.MasterName</div>
+            </div>
+            <div class="col-md-4">
+                <div class="text-muted small">Погонные метры</div>
+                <div class="fw-semibold">@(Model.Meters?.ToString("N2") ?? "—")</div>
+            </div>
+            <div class="col-md-4">
+                <div class="text-muted small">Решётки</div>
+                <div class="fw-semibold">@(Model.Grids?.ToString() ?? "—")</div>
+            </div>
+            <div class="col-md-4">
+                <div class="text-muted small">Материалы</div>
+                <div class="fw-semibold">@(Model.MaterialsUsed ?? "—")</div>
+            </div>
+            @if (!string.IsNullOrWhiteSpace(Model.Description))
+            {
+                <div class="col-12">
+                    <div class="text-muted small">Описание</div>
+                    <div>@Model.Description</div>
+                </div>
+            }
+            @if (!string.IsNullOrWhiteSpace(Model.PhotoPath))
+            {
+                <div class="col-12">
+                    <div class="text-muted small mb-1">Фото</div>
+                    <a href="@Model.PhotoPath" target="_blank">
+                        <img src="@Model.PhotoPath" class="img-fluid img-thumbnail" style="max-height:300px;" alt="Фото работы" />
+                    </a>
+                </div>
+            }
+        </div>
+    </div>
+</div>

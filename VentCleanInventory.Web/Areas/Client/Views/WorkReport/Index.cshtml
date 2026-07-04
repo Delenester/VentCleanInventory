@@ -1,0 +1,75 @@
+@model VentCleanInventory.Web.Areas.Client.Models.ClientWorkReportViewModel
+@{
+    ViewData["Title"] = "Отчёт о выполненных работах";
+}
+
+<div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <div>
+        <h1 class="m-0">@ViewData["Title"]</h1>
+    </div>
+</div>
+
+<form method="get" class="row g-2 mb-3 align-items-end">
+    <div class="col-auto">
+        <label class="form-label small mb-0">С</label>
+        <input type="date" name="from" class="form-control form-control-sm" value="@Model.From.ToString("yyyy-MM-dd")" />
+    </div>
+    <div class="col-auto">
+        <label class="form-label small mb-0">По</label>
+        <input type="date" name="to" class="form-control form-control-sm" value="@Model.To.ToString("yyyy-MM-dd")" />
+    </div>
+    <div class="col-auto d-flex gap-1">
+        <button type="submit" class="btn btn-sm btn-primary mt-3">Показать</button>
+        <a asp-action="Index" class="btn btn-sm btn-outline-secondary mt-3">Сброс</a>
+    </div>
+</form>
+
+<div class="card">
+    <div class="card-header">Выполненные работы</div>
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>Объект</th>
+                    <th>Зона</th>
+                    <th>Мастер</th>
+                    <th>Дата</th>
+                    <th>Метры</th>
+                    <th>Решётки</th>
+                    <th>Материалы</th>
+                    <th>Фото</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Rows.Any())
+                {
+                    <tr><td colspan="8" class="text-muted text-center py-3">Нет выполненных работ за выбранный период</td></tr>
+                }
+                @foreach (var w in Model.Rows)
+                {
+                    <tr role="button" class="align-middle" onclick="window.location.href='@Url.Action("Details", new { id = w.WorkLogId })'" style="cursor:pointer;">
+                        <td>@w.ObjectName</td>
+                        <td>@(w.ZoneName ?? "—")</td>
+                        <td>@w.MasterName</td>
+                        <td>@w.WorkDate.ToString("dd.MM.yyyy")</td>
+                        <td>@(w.Meters?.ToString("N2") ?? "—")</td>
+                        <td>@(w.Grids?.ToString() ?? "—")</td>
+                        <td>@(w.MaterialsUsed ?? "—")</td>
+                        <td>
+                            @if (!string.IsNullOrWhiteSpace(w.PhotoPath))
+                            {
+                                <a href="@w.PhotoPath" target="_blank" onclick="event.stopPropagation();">
+                                    <img src="@w.PhotoPath" class="img-thumbnail" style="max-height:60px;" alt="Фото" />
+                                </a>
+                            }
+                            else
+                            {
+                                <span class="text-muted">—</span>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

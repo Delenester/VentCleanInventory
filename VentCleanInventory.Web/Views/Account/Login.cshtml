@@ -1,0 +1,669 @@
+@model VentCleanInventory.Web.Models.Account.LoginViewModel
+
+@{
+    ViewData["Title"] = "Вход в систему";
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] — VentClean</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.0/font/bootstrap-icons.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+
+    <style>
+    :root {
+        --primary-gradient: linear-gradient(135deg, #0d6efd 0%, #0b5ed7 100%);
+        --card-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+        --card-shadow-hover: 0 30px 80px rgba(13, 110, 253, 0.25);
+    }
+
+    html {
+        height: 100%;
+    }
+
+    * {
+        box-sizing: border-box;
+    }
+
+    body {
+        font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        height: 100%;
+        margin: 0;
+        width: 100%;
+    }
+
+    .bg-animation {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 0;
+        background: linear-gradient(135deg, #0d6efd, #6f42c1);
+    }
+
+    .particles {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 1;
+        pointer-events: none;
+        overflow: hidden;
+    }
+
+    .particle {
+        position: absolute;
+        background: rgba(255, 255, 255, 0.5);
+        border-radius: 50%;
+        animation: float 20s infinite ease-in-out;
+    }
+
+    .particle:nth-child(1) { width: 100px; height: 100px; top: 10%; left: 10%; animation-delay: 0s; }
+    .particle:nth-child(2) { width: 60px; height: 60px; top: 60%; left: 80%; animation-delay: -5s; }
+    .particle:nth-child(3) { width: 80px; height: 80px; top: 80%; left: 30%; animation-delay: -10s; }
+    .particle:nth-child(4) { width: 120px; height: 120px; top: 30%; left: 60%; animation-delay: -15s; }
+
+    @@keyframes float {
+        0%, 100% { transform: translate(0, 0) rotate(0deg); }
+        25% { transform: translate(30px, -30px) rotate(90deg); }
+        50% { transform: translate(0, -60px) rotate(180deg); }
+        75% { transform: translate(-30px, -30px) rotate(270deg); }
+    }
+
+    .login-page {
+        position: relative;
+        z-index: 10;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+    }
+
+    .login-container {
+        display: flex;
+        align-items: stretch;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border-radius: 24px;
+        overflow: hidden;
+        box-shadow: var(--card-shadow);
+        max-width: 1000px;
+        width: 100%;
+        animation: slideUp 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        transition: box-shadow 0.3s ease, transform 0.3s ease;
+    }
+
+    .login-container:hover {
+        box-shadow: var(--card-shadow-hover);
+        transform: translateY(-5px);
+    }
+
+    @@keyframes slideUp {
+        from {
+            opacity: 0;
+            transform: translateY(40px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .login-brand {
+        flex: 1;
+        background: var(--primary-gradient);
+        padding: 60px 40px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        position: relative;
+        overflow: hidden;
+        color: white;
+    }
+
+    .login-brand::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+        animation: pulse 6s ease-in-out infinite;
+    }
+
+    @@keyframes pulse {
+        0%, 100% { transform: scale(1); opacity: 0.5; }
+        50% { transform: scale(1.1); opacity: 0.8; }
+    }
+
+    .brand-logo {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 40px;
+    }
+
+    .brand-logo-icon {
+        width: 60px;
+        height: 60px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 28px;
+        backdrop-filter: blur(10px);
+    }
+
+    .brand-title {
+        font-size: 24px;
+        font-weight: 700;
+        letter-spacing: -0.5px;
+    }
+
+    .brand-subtitle {
+        font-size: 14px;
+        opacity: 0.8;
+        margin-top: 4px;
+    }
+
+    .login-form-wrapper {
+        flex: 1;
+        padding: 50px 60px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    .login-header {
+        margin-bottom: 40px;
+        animation: fadeInDown 0.6s ease;
+    }
+
+    @@keyframes fadeInDown {
+        from {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .login-title {
+        font-size: 28px;
+        font-weight: 700;
+        color: #1a1a1a;
+        margin-bottom: 8px;
+        letter-spacing: -0.5px;
+    }
+
+    .login-subtitle {
+        font-size: 15px;
+        color: #6b7280;
+    }
+
+    .form-group {
+        margin-bottom: 24px;
+        position: relative;
+    }
+
+    .form-label {
+        display: block;
+        font-size: 14px;
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 8px;
+    }
+
+    .form-label.required::after {
+        content: '*';
+        color: #ef4444;
+        margin-left: 4px;
+    }
+
+    .input-wrapper {
+        position: relative;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 16px 20px;
+        padding-right: 50px;
+        font-size: 15px;
+        border: 2px solid #e5e7eb;
+        border-radius: 12px;
+        transition: all 0.3s ease;
+        background: #fff;
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: #0d6efd;
+        box-shadow: 0 0 0 4px rgba(13, 110, 253, 0.1);
+    }
+
+    .form-control::placeholder {
+        color: #9ca3af;
+    }
+
+    .input-icon {
+        position: absolute;
+        right: 16px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #9ca3af;
+        font-size: 18px;
+        pointer-events: none;
+    }
+
+    .password-toggle {
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 8px;
+        color: #6b7280;
+        font-size: 13px;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        border-radius: 6px;
+    }
+
+    .password-toggle:hover {
+        background: #f3f4f6;
+        color: #0d6efd;
+    }
+
+    .validation-summary {
+        background: #fef2f2;
+        border: 1px solid #fecaca;
+        border-radius: 12px;
+        padding: 16px;
+        margin-bottom: 20px;
+        animation: shake 0.5s ease;
+    }
+
+    @@keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        25% { transform: translateX(-5px); }
+        75% { transform: translateX(5px); }
+    }
+
+    .validation-summary ul {
+        margin: 0;
+        padding-left: 20px;
+    }
+
+    .validation-summary li {
+        color: #dc2626;
+        font-size: 14px;
+    }
+
+    .field-validation-error {
+        display: block;
+        font-size: 13px;
+        color: #dc2626;
+        margin-top: 6px;
+        animation: fadeIn 0.3s ease;
+    }
+
+    @@keyframes fadeIn {
+        from { opacity: 0; transform: translateY(-5px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .remember-group {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 28px;
+    }
+
+    .checkbox-custom {
+        width: 20px;
+        height: 20px;
+        border: 2px solid #d1d5db;
+        border-radius: 6px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s ease;
+        position: relative;
+    }
+
+    input[type="checkbox"]:checked + .checkbox-custom {
+        background: #0d6efd;
+        border-color: #0d6efd;
+    }
+
+    input[type="checkbox"]:checked + .checkbox-custom::after {
+        content: '✓';
+        color: white;
+        font-size: 12px;
+        font-weight: bold;
+    }
+
+    input[type="checkbox"] {
+        position: absolute;
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    .remember-label {
+        font-size: 14px;
+        color: #4b5563;
+        cursor: pointer;
+        user-select: none;
+    }
+
+    .login-btn {
+        width: 100%;
+        padding: 18px;
+        background: var(--primary-gradient);
+        color: white;
+        border: none;
+        border-radius: 12px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+        letter-spacing: 0.5px;
+    }
+
+    .login-btn::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+        transition: left 0.5s;
+    }
+
+    .login-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 30px rgba(13, 110, 253, 0.4);
+    }
+
+    .login-btn:hover::before {
+        left: 100%;
+    }
+
+    .login-btn:active {
+        transform: translateY(0);
+    }
+
+    .login-btn:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    .login-btn .btn-text {
+        display: inline-block;
+        transition: transform 0.3s ease;
+    }
+
+    .login-btn.loading .btn-text {
+        opacity: 0;
+    }
+
+    .login-btn .spinner {
+        display: none;
+        position: absolute;
+        width: 20px;
+        height: 20px;
+        border: 2px solid rgba(255,255,255,0.3);
+        border-top-color: white;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+    }
+
+    .login-btn.loading .spinner {
+        display: block;
+    }
+
+    @@keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+
+    .login-footer {
+        margin-top: 24px;
+        text-align: center;
+    }
+
+    .footer-text {
+        font-size: 14px;
+        color: #6b7280;
+    }
+
+    .footer-link {
+        color: #0d6efd;
+        font-weight: 600;
+        text-decoration: none;
+        transition: color 0.2s ease;
+    }
+
+    .footer-link:hover {
+        color: #0b5ed7;
+        text-decoration: underline;
+    }
+
+    .role-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 12px;
+        background: rgba(255,255,255,0.2);
+        border-radius: 20px;
+        font-size: 12px;
+        backdrop-filter: blur(10px);
+        margin-top: 4px;
+    }
+
+    @@media (max-width: 768px) {
+        .login-container {
+            flex-direction: column;
+            max-width: 400px;
+        }
+
+        .login-brand {
+            padding: 30px 24px;
+            text-align: center;
+        }
+
+        .login-form-wrapper {
+            padding: 40px 30px;
+        }
+
+        .login-title {
+            font-size: 24px;
+        }
+
+        .particle {
+            display: none;
+        }
+    }
+
+    @@media (max-width: 480px) {
+        .login-page {
+            padding: 16px;
+        }
+
+        .login-container {
+            max-width: 100%;
+        }
+
+        .login-form-wrapper {
+            padding: 30px 24px;
+        }
+    }
+</style>
+</head>
+<body>
+<div class="particles">
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+</div>
+
+<div class="login-page">
+    <div class="login-container">
+        <div class="login-brand">
+            <div class="brand-logo">
+                <div class="brand-logo-icon">
+                    <i class="bi bi-stack"></i>
+                </div>
+                <div>
+                    <div class="brand-title">VentClean<span style="opacity: 0.8">Inventory</span></div>
+                    <div class="brand-subtitle">Система управления складом</div>
+                </div>
+            </div>
+
+        </div>
+        
+        <div class="login-form-wrapper">
+            <div class="login-header">
+                <h1 class="login-title">Добро пожаловать</h1>
+                <div class="login-subtitle">Войдите в свой аккаунт для продолжения</div>
+            </div>
+
+            <form asp-action="Login" method="post" class="vci-touch-form" id="loginForm">
+                <input type="hidden" asp-for="ReturnUrl" />
+
+                @if (!ViewData.ModelState.IsValid)
+                {
+                    <div class="validation-summary">
+                        <ul>
+                            @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                            {
+                                <li>@error.ErrorMessage</li>
+                            }
+                        </ul>
+                    </div>
+                }
+
+                <div class="form-group">
+                    <label asp-for="Login" class="form-label required">Логин</label>
+                    <div class="input-wrapper">
+                        <input asp-for="Login" class="form-control" 
+                               placeholder="Введите логин" 
+                               autocomplete="username"
+                               autofocus />
+                        <i class="bi bi-person input-icon"></i>
+                    </div>
+                    <span asp-validation-for="Login" class="field-validation-error"></span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="Password" class="form-label required">Пароль</label>
+                    <div class="input-wrapper">
+                        <input asp-for="Password" type="password" class="form-control" 
+                               id="passwordInput"
+                               placeholder="Введите пароль" 
+                               autocomplete="current-password" />
+                        <i class="bi bi-key input-icon"></i>
+                        <button type="button" class="password-toggle" id="togglePasswordBtn" aria-label="Показать пароль">
+                            Показать
+                        </button>
+                    </div>
+                    <span asp-validation-for="Password" class="field-validation-error"></span>
+                </div>
+
+                <div class="remember-group">
+                    <input asp-for="RememberMe" type="checkbox" id="rememberMeCheck" />
+                    <label asp-for="RememberMe" class="remember-label" for="rememberMeCheck">
+                        Запомнить меня на 30 дней
+                    </label>
+                </div>
+
+                <button type="submit" class="login-btn" id="loginBtn">
+                    <span class="spinner"></span>
+                    <span class="btn-text">Войти в систему</span>
+                </button>
+            </form>
+
+            <div class="login-footer">
+                <div class="footer-text">
+                    <a asp-action="Register" class="footer-link">Создать новый аккаунт</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    <script>
+        (function () {
+            const passwordInput = document.getElementById('passwordInput');
+            const toggleBtn = document.getElementById('togglePasswordBtn');
+            const loginForm = document.getElementById('loginForm');
+            const loginBtn = document.getElementById('loginBtn');
+            const btnText = loginBtn.querySelector('.btn-text');
+            const spinner = loginBtn.querySelector('.spinner');
+
+            if (toggleBtn && passwordInput) {
+                toggleBtn.addEventListener('click', function () {
+                    const isPassword = passwordInput.type === 'password';
+                    passwordInput.type = isPassword ? 'text' : 'password';
+                    toggleBtn.textContent = isPassword ? 'Скрыть' : 'Показать';
+                    toggleBtn.setAttribute('aria-label', isPassword ? 'Скрыть пароль' : 'Показать пароль');
+                });
+            }
+
+            if (loginForm) {
+                loginForm.addEventListener('submit', function (e) {
+                    const pwd = document.querySelector('input[name="Password"]');
+                    if (pwd) pwd.value = pwd.value.trim();
+                    const login = document.querySelector('input[name="Login"]').value;
+                    const password = pwd.value;
+                    
+                    if (!login || !password) {
+                        return;
+                    }
+                    
+                    loginBtn.classList.add('loading');
+                    loginBtn.disabled = true;
+                    btnText.textContent = 'Проверка...';
+                });
+            }
+
+            const loginField = document.querySelector('input[name="Login"]');
+            if (loginField) {
+                setTimeout(() => loginField.focus(), 300);
+            }
+
+            if (passwordInput) {
+                passwordInput.addEventListener('keypress', function (e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        loginForm.requestSubmit ? loginForm.requestSubmit() : loginForm.submit();
+                    }
+                });
+            }
+        })();
+    </script>
+</body>
+</html>

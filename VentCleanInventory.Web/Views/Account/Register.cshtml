@@ -1,0 +1,481 @@
+@model VentCleanInventory.Web.Models.Account.RegisterViewModel
+
+@{
+    ViewData["Title"] = "Регистрация";
+    Layout = "_Layout";
+}
+
+<style>
+    :root {
+        --primary-gradient: linear-gradient(135deg, #0d6efd 0%, #0b5ed7 100%);
+        --card-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+        --card-shadow-hover: 0 30px 80px rgba(13, 110, 253, 0.25);
+    }
+
+    html {
+        height: 100%;
+    }
+
+    body {
+        font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        height: 100%;
+        margin: 0;
+        width: 100%;
+    }
+
+    .bg-animation {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 0;
+        background: linear-gradient(135deg, #0d6efd, #6f42c1);
+    }
+
+    .login-page {
+        position: relative;
+        z-index: 10;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+    }
+
+    .login-container {
+        display: flex;
+        align-items: stretch;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border-radius: 24px;
+        overflow: hidden;
+        box-shadow: var(--card-shadow);
+        max-width: 1000px;
+        width: 100%;
+        animation: slideUp 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    @@keyframes slideUp {
+        from { opacity: 0; transform: translateY(40px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .login-brand {
+        flex: 1;
+        background: var(--primary-gradient);
+        padding: 60px 40px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        color: white;
+    }
+
+    .brand-title {
+        font-size: 24px;
+        font-weight: 700;
+        letter-spacing: -0.5px;
+    }
+
+    .brand-subtitle {
+        font-size: 14px;
+        opacity: 0.8;
+        margin-top: 4px;
+    }
+
+    .login-form-wrapper {
+        flex: 1;
+        padding: 50px 60px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    .login-title {
+        font-size: 28px;
+        font-weight: 700;
+        color: #1a1a1a;
+        margin-bottom: 8px;
+    }
+
+    .login-subtitle {
+        font-size: 15px;
+        color: #6b7280;
+    }
+
+    .form-group {
+        margin-bottom: 24px;
+        position: relative;
+    }
+
+    .form-label {
+        display: block;
+        font-size: 14px;
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 8px;
+    }
+
+    .form-label.required::after {
+        content: '*';
+        color: #ef4444;
+        margin-left: 4px;
+    }
+
+    .input-wrapper {
+        position: relative;
+    }
+
+     .form-control {
+        width: 100%;
+        padding: 16px 20px;
+        font-size: 15px;
+        border: 2px solid #e5e7eb;
+        border-radius: 12px;
+        transition: all 0.3s ease;
+        background: #fff;
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: #0d6efd;
+        box-shadow: 0 0 0 4px rgba(13, 110, 253, 0.1);
+    }
+
+    .input-wrapper {
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+
+    .input-wrapper .form-control {
+        padding-right: 50px;
+    }
+
+    .toggle-password {
+        position: absolute;
+        right: 12px;
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 4px;
+        color: #6b7280;
+        transition: color 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .toggle-password:hover {
+        color: #0d6efd;
+    }
+
+    .validation-summary {
+        background: #fef2f2;
+        border: 1px solid #fecaca;
+        border-radius: 12px;
+        padding: 16px;
+        margin-bottom: 20px;
+    }
+
+    .validation-summary ul {
+        margin: 0;
+        padding-left: 20px;
+    }
+
+    .validation-summary li {
+        color: #dc2626;
+        font-size: 14px;
+    }
+
+    .field-validation-error {
+        display: block;
+        font-size: 13px;
+        color: #dc2626;
+        margin-top: 6px;
+    }
+
+    .password-strength {
+        height: 4px;
+        background: #e5e7eb;
+        border-radius: 2px;
+        margin-top: 8px;
+        margin-bottom: 4px;
+        overflow: hidden;
+        transition: all 0.3s ease;
+    }
+
+    .password-strength.weak {
+        background: #ef4444;
+    }
+
+    .password-strength.medium {
+        background: #f59e0b;
+    }
+
+    .password-strength.strong {
+        background: #10b981;
+    }
+
+    .password-hint {
+        display: block;
+        font-size: 12px;
+        color: #6b7280;
+        margin-top: 4px;
+    }
+
+    .login-btn {
+        width: 100%;
+        padding: 18px;
+        background: var(--primary-gradient);
+        color: white;
+        border: none;
+        border-radius: 12px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .login-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 30px rgba(13, 110, 253, 0.4);
+    }
+
+    .login-footer {
+        margin-top: 24px;
+        text-align: center;
+    }
+
+    .footer-text {
+        font-size: 14px;
+        color: #6b7280;
+    }
+
+    .footer-link {
+        color: #0d6efd;
+        font-weight: 600;
+        text-decoration: none;
+    }
+
+    .footer-link:hover {
+        color: #0b5ed7;
+        text-decoration: underline;
+    }
+
+    @@media (max-width: 768px) {
+        .login-container {
+            flex-direction: column;
+            max-width: 400px;
+        }
+
+        .login-brand {
+            padding: 30px 24px;
+            text-align: center;
+        }
+
+        .login-form-wrapper {
+            padding: 40px 30px;
+        }
+
+        .login-title {
+            font-size: 24px;
+        }
+    }
+</style>
+
+<div class="bg-animation"></div>
+
+<div class="login-page">
+    <div class="login-container">
+        <div class="login-brand">
+            <div>
+                <div class="brand-title">VentClean<span style="opacity: 0.8">Inventory</span></div>
+                <div class="brand-subtitle">Система управления складом</div>
+            </div>
+        </div>
+        
+        <div class="login-form-wrapper">
+            <div class="login-header">
+                <h1 class="login-title">Регистрация</h1>
+                <div class="login-subtitle">Для клиентов и поставщиков (по УНП организации)</div>
+            </div>
+
+             <form asp-action="Register" method="post" id="registerForm">
+                 @if (!ViewData.ModelState.IsValid)
+                 {
+                     <div class="validation-summary">
+                         <ul>
+                             @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                             {
+                                 <li>@error.ErrorMessage</li>
+                             }
+                         </ul>
+                     </div>
+                 }
+
+                 <div class="form-group">
+                     <label asp-for="AccountType" class="form-label required">Тип аккаунта</label>
+                     <select asp-for="AccountType" class="form-control">
+                         <option value="@VentCleanInventory.Web.Data.AccountType.Client">Клиент (заказчик)</option>
+                         <option value="@VentCleanInventory.Web.Data.AccountType.Supplier">Поставщик</option>
+                     </select>
+                     <small class="password-hint">Мастера и диспетчеры получают доступ от администратора.</small>
+                 </div>
+
+                 <div class="form-group">
+                     <label asp-for="FullName" class="form-label required">Контактное лицо</label>
+                     <input asp-for="FullName" class="form-control" placeholder="ФИО представителя" autocomplete="name" />
+                     <span asp-validation-for="FullName" class="field-validation-error"></span>
+                 </div>
+
+                 <div class="form-group">
+                     <label asp-for="Unp" class="form-label required">УНП (9 цифр)</label>
+                     <input asp-for="Unp" class="form-control" placeholder="123456789" maxlength="9" />
+                     <span asp-validation-for="Unp" class="field-validation-error"></span>
+                 </div>
+
+                 <div class="form-group">
+                     <label asp-for="OrganizationName" class="form-label required">Наименование организации</label>
+                     <input asp-for="OrganizationName" class="form-control" />
+                     <span asp-validation-for="OrganizationName" class="field-validation-error"></span>
+                 </div>
+
+                 <div class="form-group">
+                     <label asp-for="LegalAddress" class="form-label required">Юридический адрес</label>
+                     <input asp-for="LegalAddress" class="form-control" />
+                     <span asp-validation-for="LegalAddress" class="field-validation-error"></span>
+                 </div>
+
+                 <div class="form-group">
+                     <label asp-for="ContactInfo" class="form-label">Контакты</label>
+                     <input asp-for="ContactInfo" class="form-control" placeholder="Телефон, email организации" />
+                 </div>
+
+                  <div class="form-group">
+                     <label asp-for="PhoneContact" class="form-label">Телефон</label>
+                     <input asp-for="PhoneContact" class="form-control" placeholder="+375 (XX) XXX-XX-XX" />
+                  </div>
+
+                 <div class="form-group">
+                     <label asp-for="BankAccount" class="form-label">Расчётный счёт</label>
+                     <input asp-for="BankAccount" class="form-control" placeholder="Номер расчётного счёта" />
+                 </div>
+
+                 <div class="form-group">
+                     <label asp-for="BankName" class="form-label">Банк</label>
+                     <input asp-for="BankName" class="form-control" placeholder="Наименование банка" />
+                 </div>
+
+                 <div class="form-group">
+                     <label asp-for="BIK" class="form-label">БИК</label>
+                     <input asp-for="BIK" class="form-control" placeholder="БИК банка" />
+                 </div>
+
+                 <div class="form-group">
+                     <label asp-for="Email" class="form-label required">Email (логин)</label>
+                     <input asp-for="Email" class="form-control" placeholder="Введите email" autocomplete="email" />
+                     <span asp-validation-for="Email" class="field-validation-error"></span>
+                 </div>
+
+                 <div class="form-group">
+                     <label asp-for="Password" class="form-label required">Пароль</label>
+                     <div class="input-wrapper">
+                         <input asp-for="Password" type="password" class="form-control" id="passwordInput" placeholder="Введите пароль (минимум 8 символов)" autocomplete="new-password" />
+                         <button type="button" class="toggle-password" onclick="togglePassword('passwordInput', this)" aria-label="Показать пароль">
+                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                                 <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z"/>
+                                 <path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z"/>
+                             </svg>
+                         </button>
+                     </div>
+                     <div id="passwordStrength" class="password-strength"></div>
+                     <span asp-validation-for="Password" class="field-validation-error"></span>
+                     <small class="password-hint">Минимум 8 символов. Можно использовать любые символы.</small>
+                 </div>
+
+                 <div class="form-group">
+                     <label asp-for="ConfirmPassword" class="form-label required">Подтвердите пароль</label>
+                     <div class="input-wrapper">
+                         <input asp-for="ConfirmPassword" type="password" class="form-control" id="confirmPasswordInput" placeholder="Повторите пароль" autocomplete="new-password" />
+                         <button type="button" class="toggle-password" onclick="togglePassword('confirmPasswordInput', this)" aria-label="Показать пароль">
+                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                                 <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z"/>
+                                 <path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z"/>
+                             </svg>
+                         </button>
+                     </div>
+                     <span asp-validation-for="ConfirmPassword" class="field-validation-error"></span>
+                 </div>
+
+                <button type="submit" class="login-btn">Зарегистрироваться</button>
+            </form>
+
+            <div class="login-footer">
+                <div class="footer-text">
+                    Уже есть аккаунт? <a asp-action="Login" class="footer-link">Войти</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        function togglePassword(inputId, button) {
+            const input = document.getElementById(inputId);
+            const type = input.getAttribute('type') === 'password' ? 'text' : 'password';
+            input.setAttribute('type', type);
+            button.querySelector('svg').style.transform = type === 'password' ? '' : 'scaleX(-1)';
+        }
+
+        document.getElementById('passwordInput').addEventListener('input', function() {
+            const password = this.value;
+            const strengthDiv = document.getElementById('passwordStrength');
+            
+            if (password.length === 0) {
+                strengthDiv.className = 'password-strength';
+                strengthDiv.innerHTML = '';
+                return;
+            }
+            
+            let strength = 0;
+            if (password.length >= 4) strength += 25;
+            if (password.length >= 6) strength += 25;
+            if (password.length >= 8) strength += 25;
+            if (password.length >= 12) strength += 25;
+            
+            strengthDiv.style.width = '100%';
+            
+            if (strength <= 25) {
+                strengthDiv.className = 'password-strength weak';
+            } else if (strength <= 50) {
+                strengthDiv.className = 'password-strength medium';
+            } else {
+                strengthDiv.className = 'password-strength strong';
+            }
+        });
+
+        document.getElementById('registerForm').addEventListener('submit', function(e) {
+            const pwdInput = document.getElementById('passwordInput');
+            const confirmInput = document.getElementById('confirmPasswordInput');
+            pwdInput.value = pwdInput.value.trim();
+            confirmInput.value = confirmInput.value.trim();
+            const password = pwdInput.value;
+            const confirmPassword = confirmInput.value;
+            
+            if (password.length > 0 && password.length < 8) {
+                e.preventDefault();
+                alert('Пароль должен содержать минимум 8 символов');
+                return;
+            }
+            
+            if (password !== confirmPassword) {
+                e.preventDefault();
+                alert('Пароли не совпадают');
+                return;
+            }
+        });
+    </script>
+}

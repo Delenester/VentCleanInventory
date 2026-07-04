@@ -1,0 +1,148 @@
+@model IReadOnlyList<VentCleanInventory.Web.Data.Entities.StockTransaction>
+@using VentCleanInventory.Web.Data
+
+@{
+    ViewData["Title"] = "Все заявки";
+    var masters = ViewBag.Masters as Dictionary<string, string> ?? [];
+    var page = (int)ViewBag.Page;
+    var totalPages = (int)ViewBag.TotalPages;
+    var total = (int)ViewBag.Total;
+    var filterStatus = ViewBag.FilterStatus as RequestStatus?;
+    var filterFrom = ViewBag.FilterFrom as DateTime?;
+    var filterTo = ViewBag.FilterTo as DateTime?;
+}
+
+<style>
+    .req-card { border: 1px solid #e9ecef; border-radius: 12px; padding: 1rem; margin-bottom: 0.75rem; background: #fff; }
+    .req-card-header { display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 0.5rem; }
+    .req-card-title { font-weight: 600; color: #212529; }
+    .req-card-meta { font-size: 0.85rem; color: #6c757d; }
+    .req-card-actions { display: flex; gap: 0.5rem; margin-top: 0.75rem; flex-wrap: wrap; }
+    @@media (max-width: 576px) {
+        .req-card-actions { flex-direction: column; }
+        .req-card-actions .btn { width: 100%; }
+    }
+</style>
+
+<div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <h1 class="m-0">@ViewData["Title"]</h1>
+    <span class="text-muted small">Всего: @total</span>
+</div>
+
+@* Filters *@
+<form method="get" class="card mb-4">
+    <div class="card-body">
+        <div class="row g-2 align-items-end">
+            <div class="col-6 col-md-3">
+                <label class="form-label small">Статус</label>
+                <select name="status" class="form-select form-select-sm">
+                    <option value="">Все</option>
+                    @foreach (var s in new[] {
+                        (RequestStatus.New, "Новая"),
+                        (RequestStatus.Approved, "Одобрена"),
+                        (RequestStatus.ClientConfirmed, "Подтверждена"),
+                        (RequestStatus.Assigned, "Назначена"),
+                        (RequestStatus.InProgress, "В работе"),
+                        (RequestStatus.Completed, "Выполнена"),
+                        (RequestStatus.Rejected, "Отклонена")
+                    })
+                    {
+                        <option value="@((int)s.Item1)" selected="@(filterStatus == s.Item1)">@s.Item2</option>
+                    }
+                </select>
+            </div>
+            <div class="col-6 col-md-3">
+                <label class="form-label small">От</label>
+                <input type="date" name="from" class="form-control form-control-sm" value="@filterFrom?.ToString("yyyy-MM-dd")" />
+            </div>
+            <div class="col-6 col-md-3">
+                <label class="form-label small">До</label>
+                <input type="date" name="to" class="form-control form-control-sm" value="@filterTo?.ToString("yyyy-MM-dd")" />
+            </div>
+            <div class="col-6 col-md-3 d-flex gap-2">
+                <button type="submit" class="btn btn-primary btn-sm flex-fill">Фильтр</button>
+                <a asp-action="Index" class="btn btn-outline-secondary btn-sm flex-fill">Сброс</a>
+            </div>
+        </div>
+    </div>
+</form>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">Нет заявок по заданным фильтрам.</div>
+}
+else
+{
+    @foreach (var r in Model)
+    {
+        <div class="req-card">
+            <div class="req-card-header">
+                <div>
+                    <div class="req-card-title">#@r.Id &middot; @r.WorkObject?.Name</div>
+                    <div class="req-card-meta">@r.Date.ToString("dd.MM.yyyy") &middot; @(r.WorkObject?.Address ?? "—")</div>
+                </div>
+                @switch (r.RequestStatusValue)
+                {
+                    case RequestStatus.New:
+                        <span class="badge bg-warning text-dark">Новая</span>
+                        break;
+                    case RequestStatus.Approved:
+                        <span class="badge bg-success">Одобрена</span>
+                        break;
+                    case RequestStatus.ClientConfirmed:
+                        <span class="badge bg-info text-dark">Подтверждена</span>
+                        break;
+                    case RequestStatus.Assigned:
+                        <span class="badge bg-primary">Назначена</span>
+                        break;
+                    case RequestStatus.InProgress:
+                        <span class="badge bg-secondary">В работе</span>
+                        break;
+                    case RequestStatus.Completed:
+                        <span class="badge bg-success">Выполнена</span>
+                        break;
+                    case RequestStatus.Rejected:
+                        <span class="badge bg-danger">Отклонена</span>
+                        break;
+                }
+            </div>
+            <div class="req-card-meta d-flex flex-wrap gap-3">
+                @if (r.EstimatedCost.HasValue)
+                {
+                    <span><i class="bi bi-currency-ruble"></i> @r.EstimatedCost.Value.ToString("N2") руб.</span>
+                }
+                <span><i class="bi bi-person"></i> @(masters.GetValueOrDefault(r.AssignedMasterId ?? "", "—"))</span>
+            </div>
+            <div class="req-card-actions">
+                <a asp-action="Details" asp-route-id="@r.Id" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-eye"></i> Подробнее
+                </a>
+                @if (!string.IsNullOrWhiteSpace(r.ContractNumber))
+                {
+                    <a asp-area="Manager" asp-controller="Contract" asp-action="Export" asp-route-id="@r.Id" class="btn btn-outline-primary btn-sm">
+                        <i class="bi bi-download"></i> Договор
+                    </a>
+                }
+            </div>
+        </div>
+    }
+
+    @* Pagination *@
+    if (totalPages > 1)
+    {
+        <nav>
+            <ul class="pagination pagination-sm justify-content-center mt-3">
+                @for (int p = 1; p <= totalPages; p++)
+                {
+                    <li class="page-item @(p == page ? "active" : "")">
+                        <a class="page-link" asp-action="Index"
+                           asp-route-status="@filterStatus"
+                           asp-route-from="@filterFrom?.ToString("yyyy-MM-dd")"
+                           asp-route-to="@filterTo?.ToString("yyyy-MM-dd")"
+                           asp-route-page="@p">@p</a>
+                    </li>
+                }
+            </ul>
+        </nav>
+    }
+}

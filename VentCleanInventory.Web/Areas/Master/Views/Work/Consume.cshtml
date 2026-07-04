@@ -1,0 +1,148 @@
+@model VentCleanInventory.Web.Areas.Master.Models.Work.WorkConsumeViewModel
+
+@{
+    ViewData["Title"] = "Добавление работы";
+    var info = TempData["Info"] as string;
+    var materials = ViewBag.MaterialOptions as IEnumerable<dynamic> ?? Array.Empty<dynamic>();
+}
+
+@if (!string.IsNullOrWhiteSpace(info))
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle me-2"></i>@info
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<div class="page-header">
+    <div class="d-flex align-items-center gap-2">
+        <a asp-area="Master" asp-controller="MyWork" asp-action="Index" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i>
+        </a>
+        <h1 class="m-0">@ViewData["Title"]</h1>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form method="post" class="vci-touch-form" id="consumeForm" enctype="multipart/form-data">
+            @Html.AntiForgeryToken()
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+            <div class="row g-3">
+                <div class="col-12 col-md-6">
+                    <label asp-for="WorkObjectId" class="form-label required">Объект</label>
+                    <select asp-for="WorkObjectId" class="form-select" onchange="onObjectChange(this)">
+                        <option value="">— выберите —</option>
+                        @foreach (var o in Model.Objects)
+                        {
+                            <option value="@o.Id">@o.Name</option>
+                        }
+                    </select>
+                    <span asp-validation-for="WorkObjectId" class="text-danger small"></span>
+                </div>
+                <div class="col-12 col-md-6">
+                    <label asp-for="ZoneName" class="form-label">Зона (необязательно)</label>
+                    <input asp-for="ZoneName" class="form-control" placeholder="Напр. Цокольный этаж" />
+                </div>
+            </div>
+
+            <h6 class="mt-4 mb-3"><i class="bi bi-droplet me-2"></i>Материалы</h6>
+
+            <div class="table-responsive">
+                <table class="table table-borderless mb-3" id="linesTable">
+                    <thead>
+                    <tr>
+                        <th>Материал</th>
+                        <th style="width: 100px">Кол-во</th>
+                        <th style="width: 50px"></th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    @for (var i = 0; i < Model.Lines.Count; i++)
+                    {
+                        <tr>
+                            <td>
+                                <select asp-for="Lines[i].InventoryItemId" class="form-select">
+                                    <option value="">— выберите —</option>
+                                    @foreach (var m in materials)
+                                    {
+                                        <option value="@m.InventoryItemId">@m.Display (остаток @m.Quantity)</option>
+                                    }
+                                </select>
+                            </td>
+                            <td>
+                                <input asp-for="Lines[i].Quantity" class="form-control text-end number-format" type="text" inputmode="decimal" />
+                            </td>
+                            <td class="text-center">
+                                <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeRow(this)">
+                                    <i class="bi bi-x-lg"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+
+            <button type="button" class="btn btn-outline-primary mb-4" onclick="addRow()">
+                <i class="bi bi-plus-lg me-1"></i>Добавить материал
+            </button>
+
+            <h6 class="mb-3"><i class="bi bi-ruler me-2"></i>Выполненные работы</h6>
+
+            <div class="row g-3">
+                <div class="col-6">
+                    <label asp-for="Meters" class="form-label">Погонные метры</label>
+                    <input asp-for="Meters" class="form-control text-end number-format" type="text" inputmode="decimal" />
+                </div>
+                <div class="col-6">
+                    <label asp-for="Grids" class="form-label">Решётки (шт)</label>
+                    <input asp-for="Grids" class="form-control" type="number" step="1" min="0" />
+                </div>
+            </div>
+
+            <div class="mt-4">
+                <label asp-for="DefectPhoto" class="form-label">Фото дефекта/брака (необязательно)</label>
+                <input asp-for="DefectPhoto" type="file" class="form-control" accept="image/jpeg,image/png" />
+                <span asp-validation-for="DefectPhoto" class="text-danger small"></span>
+                <div class="form-text">Загрузите фото для прикрепления к акту списания (до 5 МБ, jpg/png)</div>
+            </div>
+
+            <div class="mt-4">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="bi bi-check-lg me-1"></i>Сохранить
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        function onObjectChange(sel) {
+            const val = sel.value;
+            const url = val ? `@Url.Action("Consume","Work", new { area = "Master" })?workObjectId=${val}` : `@Url.Action("Consume","Work", new { area = "Master" })`;
+            window.location.href = url;
+        }
+        const materialsHtml = `@Html.Raw(string.Join("", materials.Select(m => $"<option value=\\\"{m.InventoryItemId}\\\">{System.Net.WebUtility.HtmlEncode((string)m.Display)} (остаток {m.Quantity})</option>")))`;
+        function addRow() {
+            const tbody = document.querySelector('#linesTable tbody');
+            const index = tbody.querySelectorAll('tr').length;
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+              <td>
+                <select class="form-select" name="Lines[${index}].InventoryItemId">
+                  <option value="">— выберите —</option>
+                  ${materialsHtml}
+                </select>
+              </td>
+              <td><input class="form-control text-end number-format" name="Lines[${index}].Quantity" value="1" type="text" inputmode="decimal" /></td>
+              <td class="text-center"><button type="button" class="btn btn-outline-danger btn-sm" onclick="removeRow(this)"><i class="bi bi-x-lg"></i></button></td>
+            `;
+            tbody.appendChild(tr);
+        }
+        function removeRow(btn) { btn.closest('tr')?.remove(); }
+    </script>
+}

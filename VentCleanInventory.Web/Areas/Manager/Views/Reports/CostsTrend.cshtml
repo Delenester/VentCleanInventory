@@ -1,0 +1,90 @@
+@model VentCleanInventory.Web.Areas.Manager.Models.Reports.CostsTrendViewModel
+
+@{
+    ViewData["Title"] = "Динамика затрат по месяцам";
+    var labels = Model.Points.Select(p => p.Month).ToArray();
+    var values = Model.Points.Select(p => p.Cost).ToArray();
+}
+
+<div class="page-header">
+    <div class="d-flex align-items-center justify-content-between">
+        <h1 class="m-0">@ViewData["Title"]</h1>
+        <div class="d-flex gap-2">
+            <a asp-area="Manager" asp-controller="ManagerHome" asp-action="Index" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i>Назад
+            </a>
+            <a class="btn btn-outline-success" asp-action="CostsTrendExcel" asp-route-from="@Model.From?.ToString("yyyy-MM-dd")" asp-route-to="@Model.To?.ToString("yyyy-MM-dd")">
+                <i class="bi bi-file-earmark-excel me-1"></i>Экспорт
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3 vci-touch-form">
+            <div class="col-12 col-md-4">
+                <label class="form-label">Дата начала</label>
+                <input class="form-control" type="date" name="from" value="@Model.From?.ToString("yyyy-MM-dd")" />
+            </div>
+            <div class="col-12 col-md-4">
+                <label class="form-label">Дата окончания</label>
+                <input class="form-control" type="date" name="to" value="@Model.To?.ToString("yyyy-MM-dd")" />
+            </div>
+            <div class="col-12 col-md-4 d-grid align-self-end">
+                <button class="btn btn-primary" type="submit">
+                    <i class="bi bi-search me-1"></i>Показать
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        @if (!Model.Points.Any())
+        {
+            <div class="text-center text-muted py-5">
+                <i class="bi bi-inbox d-block mb-2" style="font-size: 3rem;"></i>
+                Нет данных за выбранный период
+            </div>
+        }
+        else
+        {
+            <canvas id="costsChart" height="120"></canvas>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script>
+        const labels = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(labels));
+        const values = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(values));
+
+        const ctx = document.getElementById('costsChart');
+        new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels,
+            datasets: [{
+              label: 'Затраты (₽)',
+              data: values,
+              borderColor: '#0d6efd',
+              backgroundColor: 'rgba(13, 110, 253, 0.1)',
+              tension: 0.3,
+              fill: true
+            }]
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              legend: { display: true }
+            },
+            scales: {
+              y: { beginAtZero: true }
+            }
+          }
+        });
+    </script>
+}

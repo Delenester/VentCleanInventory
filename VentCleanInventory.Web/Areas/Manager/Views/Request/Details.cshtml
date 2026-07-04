@@ -1,0 +1,154 @@
+@model VentCleanInventory.Web.Data.Entities.StockTransaction
+@using VentCleanInventory.Web.Data
+@using VentCleanInventory.Web.Data.Entities
+
+@{
+    ViewData["Title"] = $"Заявка №{Model.Id}";
+    var clientUser = ViewBag.ClientUser as ApplicationUser;
+    var masterList = ViewBag.MasterList as IList<ApplicationUser> ?? new List<ApplicationUser>();
+}
+
+<div class="page-header">
+    <div class="d-flex align-items-center justify-content-between">
+        <div>
+            <h1 class="m-0">@ViewData["Title"]</h1>
+            <p class="text-muted mb-0 mt-1">Детали заявки и калькуляция</p>
+        </div>
+        <a asp-action="Index" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Назад
+        </a>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-header">Информация о заявке</div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-5">Номер</dt>
+                    <dd class="col-sm-7">#@Model.Id</dd>
+
+                    <dt class="col-sm-5">Дата подачи</dt>
+                    <dd class="col-sm-7">@Model.Date.ToString("dd.MM.yyyy HH:mm")</dd>
+
+                    <dt class="col-sm-5">Статус</dt>
+                    <dd class="col-sm-7">
+                        @switch (Model.RequestStatusValue)
+                        {
+                            case RequestStatus.New:
+                                <span class="badge bg-warning text-dark">Новая</span>
+                                break;
+                            case RequestStatus.Approved:
+                                <span class="badge bg-success">Одобрена</span>
+                                break;
+                            case RequestStatus.ClientConfirmed:
+                                <span class="badge bg-info text-dark">Подтверждена клиентом</span>
+                                break;
+                            case RequestStatus.Assigned:
+                                <span class="badge bg-primary">Назначена</span>
+                                break;
+                            case RequestStatus.InProgress:
+                                <span class="badge bg-secondary">В работе</span>
+                                break;
+                            case RequestStatus.Completed:
+                                <span class="badge bg-secondary">Выполнена</span>
+                                break;
+                            case RequestStatus.Rejected:
+                                <span class="badge bg-danger">Отклонена</span>
+                                break;
+                            default:
+                                <span class="badge bg-secondary">@Model.RequestStatusValue</span>
+                                break;
+                        }
+                    </dd>
+
+                    <dt class="col-sm-5">Клиент</dt>
+                    <dd class="col-sm-7">@(clientUser?.FullName ?? "—")</dd>
+
+                    <dt class="col-sm-5">Объект</dt>
+                    <dd class="col-sm-7">@(Model.WorkObject?.Name ?? "—")</dd>
+
+                    <dt class="col-sm-5">Договор</dt>
+                    <dd class="col-sm-7">
+                        @(Model.ContractNumber ?? "—")
+                        @if (!string.IsNullOrWhiteSpace(Model.ContractNumber))
+                        {
+                            <a asp-action="Export" asp-controller="Contract" asp-route-id="@Model.Id" class="btn btn-sm btn-outline-primary ms-2">
+                                <i class="bi bi-download"></i> Скачать
+                            </a>
+                        }
+                    </dd>
+
+                    <dt class="col-sm-5">Стоимость</dt>
+                    <dd class="col-sm-7">@(Model.EstimatedCost?.ToString("N2") ?? "—") руб.</dd>
+
+                    <dt class="col-sm-5">Примечание менеджера</dt>
+                    <dd class="col-sm-7">@(Model.ManagerNote ?? "—")</dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-header">Калькуляция и расписание</div>
+            <div class="card-body">
+                <form asp-action="Approve" asp-route-id="@Model.Id" method="post">
+                    @Html.AntiForgeryToken()
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Стоимость работ (руб.)</label>
+                        <input type="number" step="0.01" name="estimatedCost" class="form-control"
+                               value="@(Model.EstimatedCost?.ToString("F2") ?? "")" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Примечание менеджера</label>
+                        <textarea name="managerNote" class="form-control" rows="3">@(Model.ManagerNote ?? "")</textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Назначенный мастер</label>
+                        <select name="assignedMasterId" class="form-select">
+                            <option value="">— Не назначен —</option>
+                            @foreach (var m in masterList)
+                            {
+                                <option value="@m.Id" selected="@(m.Id == Model.AssignedMasterId)">
+                                    @(m.FullName ?? m.UserName)
+                                </option>
+                            }
+                        </select>
+                    </div>
+                    <div class="row g-3 mb-4">
+                        <div class="col-6">
+                            <label class="form-label fw-semibold">Планируемая дата начала</label>
+                            <input type="date" name="plannedStartDate" class="form-control"
+                                   value="@Model.PlannedStartDate?.ToString("yyyy-MM-dd")" />
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label fw-semibold">Планируемая дата окончания</label>
+                            <input type="date" name="plannedEndDate" class="form-control"
+                                   value="@Model.PlannedEndDate?.ToString("yyyy-MM-dd")" />
+                        </div>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-success flex-fill">
+                            <i class="bi bi-check-lg"></i> Одобрить
+                        </button>
+                    </div>
+                </form>
+
+                <hr class="my-4" />
+
+                <form asp-action="Reject" asp-route-id="@Model.Id" method="post">
+                    @Html.AntiForgeryToken()
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Причина отклонения</label>
+                        <textarea name="managerNote" class="form-control" rows="2" required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-danger w-100">
+                        <i class="bi bi-x-lg"></i> Отклонить заявку
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,81 @@
+@model VentCleanInventory.Web.Areas.Manager.Models.Reports.EquipmentUtilizationViewModel
+
+@{
+    ViewData["Title"] = "Загруженность оборудования";
+}
+
+<div class="page-header">
+    <div class="d-flex align-items-center justify-content-between">
+        <h1 class="m-0">@ViewData["Title"]</h1>
+        <div class="d-flex gap-2">
+            <a asp-area="Manager" asp-controller="ManagerHome" asp-action="Index" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i>Назад
+            </a>
+            <a class="btn btn-outline-success" asp-action="EquipmentUtilizationExcel" asp-route-from="@Model.From?.ToString("yyyy-MM-dd")" asp-route-to="@Model.To?.ToString("yyyy-MM-dd")">
+                <i class="bi bi-file-earmark-excel me-1"></i>Экспорт
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3 vci-touch-form">
+            <div class="col-12 col-md-4">
+                <label class="form-label">Дата начала</label>
+                <input class="form-control" type="date" name="from" value="@Model.From?.ToString("yyyy-MM-dd")" />
+            </div>
+            <div class="col-12 col-md-4">
+                <label class="form-label">Дата окончания</label>
+                <input class="form-control" type="date" name="to" value="@Model.To?.ToString("yyyy-MM-dd")" />
+            </div>
+            <div class="col-12 col-md-4 d-grid align-self-end">
+                <button class="btn btn-primary" type="submit">
+                    <i class="bi bi-search me-1"></i>Показать
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead>
+            <tr>
+                <th>Оборудование</th>
+                <th>Инв. №</th>
+                <th class="text-end">Выдач</th>
+                <th class="text-end">Среднее дней у мастеров</th>
+            </tr>
+            </thead>
+            <tbody>
+            @if (!Model.Rows.Any())
+            {
+                <tr>
+                    <td colspan="4" class="text-center text-muted py-4">
+                        <i class="bi bi-inbox d-block mb-2" style="font-size: 2rem;"></i>
+                        Нет данных
+                    </td>
+                </tr>
+            }
+            else
+            {
+                @foreach (var r in Model.Rows)
+                {
+                    <tr>
+                        <td class="fw-semibold">@r.Name</td>
+                        <td><span class="text-muted">@r.SerialNumber</span></td>
+                        <td class="text-end">@r.IssueCount</td>
+                        <td class="text-end">@r.AvgDaysWithMaster.ToString("0.0") дн.</td>
+                    </tr>
+                }
+            }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<small class="text-muted mt-2 d-block">
+    <i class="bi bi-info-circle me-1"></i>Среднее рассчитано по парам Issue→Return в порядке дат.
+</small>

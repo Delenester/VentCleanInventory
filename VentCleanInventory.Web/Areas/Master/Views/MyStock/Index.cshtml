@@ -1,0 +1,61 @@
+@model VentCleanInventory.Web.Areas.Master.Models.MyStock.MyStockIndexViewModel
+
+@{
+    ViewData["Title"] = "Мой склад";
+}
+
+<div class="page-header">
+    <div class="d-flex align-items-center justify-content-between">
+        <div class="d-flex align-items-center gap-2">
+            <a asp-area="Master" asp-controller="MasterHome" asp-action="Index" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i>
+            </a>
+            <h1 class="m-0">@ViewData["Title"]</h1>
+        </div>
+    </div>
+</div>
+
+<div class="btn-group mb-3 w-100" role="group">
+    <a class="btn btn-outline-secondary @(Model.Filter=="all"?"active":"")" asp-route-filter="all">
+        <i class="bi bi-list me-1"></i>Все
+    </a>
+    <a class="btn btn-outline-secondary @(Model.Filter=="equip"?"active":"")" asp-route-filter="equip">
+        <i class="bi bi-gear me-1"></i>Оборуд.
+    </a>
+    <a class="btn btn-outline-secondary @(Model.Filter=="cons"?"active":"")" asp-route-filter="cons">
+        <i class="bi bi-droplet me-1"></i>Расход.
+    </a>
+</div>
+
+@if (!Model.Rows.Any())
+{
+    <div class="alert alert-info">
+        <i class="bi bi-info-circle me-2"></i>На вашем складе нет позиций
+    </div>
+}
+else
+{
+    <div class="card">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                <tr>
+                    <th>Позиция</th>
+                    <th>Серийный №</th>
+                    <th class="text-end">Кол-во</th>
+                </tr>
+                </thead>
+                <tbody>
+                @foreach (var r in Model.Rows)
+                {
+                    <tr>
+                        <td class="fw-semibold">@r.Name</td>
+                        <td><span class="text-muted">@(r.SerialNumber ?? "-")</span></td>
+                        <td class="text-end">@r.Quantity</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}

@@ -1,0 +1,115 @@
+@model IReadOnlyList<VentCleanInventory.Web.Areas.Dispatcher.Models.Requests.RequestListItemViewModel>
+
+@{
+    ViewData["Title"] = "Заявки мастеров";
+    var info = TempData["Info"] as string;
+}
+
+@if (!string.IsNullOrWhiteSpace(info))
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle me-2"></i>@info
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<div class="page-header">
+    <div class="d-flex align-items-center justify-content-between">
+        <div class="d-flex align-items-center gap-2">
+            <a asp-area="Dispatcher" asp-controller="DispatcherHome" asp-action="Index" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i>
+            </a>
+            <h1 class="m-0">@ViewData["Title"]</h1>
+        </div>
+        <span class="badge bg-primary fs-6">@Model.Count заявок</span>
+    </div>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">
+        <i class="bi bi-inbox me-2"></i>Нет активных заявок
+    </div>
+}
+else
+{
+    <div class="card">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                <tr>
+                    <th>№</th>
+                    <th>Дата</th>
+                    <th>Мастер</th>
+                    <th>Объект</th>
+                    <th>Статус</th>
+                    <th class="text-end">Действия</th>
+                </tr>
+                </thead>
+                <tbody>
+                @foreach (var r in Model)
+                {
+                    <tr>
+                        <td class="fw-semibold">#@r.Id</td>
+                        <td>@r.DateCreated.ToString("dd.MM.yyyy")</td>
+                        <td>@r.MasterName</td>
+                        <td>@r.ObjectName</td>
+                        <td>
+                            <span class="badge bg-@GetStatusBadge(r.Status)">@GetStatusName(r.Status)</span>
+                        </td>
+                        <td class="text-end">
+                            <a class="btn btn-outline-secondary btn-sm" asp-action="Details" asp-route-id="@r.Id">
+                                <i class="bi bi-eye me-1"></i>Открыть
+                            </a>
+                            @if (r.Status == VentCleanInventory.Web.Data.RequestStatus.New)
+                            {
+                                <a class="btn btn-primary btn-sm" asp-action="Issue" asp-route-id="@r.Id">
+                                    <i class="bi bi-box-arrow-up me-1"></i>Выдать
+                                </a>
+                            }
+                            @if (r.Status == VentCleanInventory.Web.Data.RequestStatus.ClientConfirmed
+                                || r.Status == VentCleanInventory.Web.Data.RequestStatus.Assigned
+                                || r.Status == VentCleanInventory.Web.Data.RequestStatus.InProgress)
+                            {
+                                <form asp-action="CompleteWork" method="post" class="d-inline">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@r.Id" />
+                                    <button type="submit" class="btn btn-success btn-sm">
+                                        <i class="bi bi-check2-circle me-1"></i>Завершить
+                                    </button>
+                                </form>
+                            }
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+
+@{
+    string GetStatusBadge(VentCleanInventory.Web.Data.RequestStatus status) => status switch
+    {
+        VentCleanInventory.Web.Data.RequestStatus.New => "warning text-dark",
+        VentCleanInventory.Web.Data.RequestStatus.Approved => "success",
+        VentCleanInventory.Web.Data.RequestStatus.ClientConfirmed => "info",
+        VentCleanInventory.Web.Data.RequestStatus.Assigned => "primary",
+        VentCleanInventory.Web.Data.RequestStatus.InProgress => "secondary",
+        VentCleanInventory.Web.Data.RequestStatus.Completed => "secondary",
+        VentCleanInventory.Web.Data.RequestStatus.Rejected => "danger",
+        _ => "secondary"
+    };
+
+    string GetStatusName(VentCleanInventory.Web.Data.RequestStatus status) => status switch
+    {
+        VentCleanInventory.Web.Data.RequestStatus.New => "Новая",
+        VentCleanInventory.Web.Data.RequestStatus.Approved => "Утверждена",
+        VentCleanInventory.Web.Data.RequestStatus.ClientConfirmed => "Подтверждён",
+        VentCleanInventory.Web.Data.RequestStatus.Assigned => "Назначена",
+        VentCleanInventory.Web.Data.RequestStatus.InProgress => "В работе",
+        VentCleanInventory.Web.Data.RequestStatus.Completed => "Выполнена",
+        VentCleanInventory.Web.Data.RequestStatus.Rejected => "Отклонена",
+        _ => status.ToString()
+    };
+}

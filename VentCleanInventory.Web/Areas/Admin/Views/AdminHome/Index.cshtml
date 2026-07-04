@@ -1,0 +1,31 @@
+@{
+    ViewData["Title"] = "Администрирование";
+}
+
+<div class="page-header">
+    <h1 class="m-0">@ViewData["Title"]</h1>
+</div>
+
+<div class="row g-3">
+    <div class="col-12 col-lg-6">
+        <div class="card">
+            <div class="card-header">Справочники</div>
+            <div class="list-group list-group-flush">
+                <a class="list-group-item list-group-item-action" asp-area="Admin" asp-controller="Nomenclature" asp-action="Index">Номенклатура</a>
+                <a class="list-group-item list-group-item-action" asp-area="Admin" asp-controller="Suppliers" asp-action="Index">Поставщики</a>
+                <a class="list-group-item list-group-item-action" asp-area="Admin" asp-controller="Clients" asp-action="Index">Клиенты (юр. лица)</a>
+                <a class="list-group-item list-group-item-action" asp-area="Admin" asp-controller="Objects" asp-action="Index">Объекты</a>
+                <a class="list-group-item list-group-item-action" asp-area="Admin" asp-controller="Warehouses" asp-action="Index">Склады</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-lg-6">
+        <div class="card">
+            <div class="card-header">Система</div>
+            <div class="list-group list-group-flush">
+                <a class="list-group-item list-group-item-action" asp-area="Admin" asp-controller="Users" asp-action="Index">Пользователи (работники)</a>
+                <a class="list-group-item list-group-item-action" asp-area="Admin" asp-controller="Backup" asp-action="Index">Резервное копирование</a>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,188 @@
+@model IReadOnlyList<VentCleanInventory.Web.Data.Entities.Notification>
+@{
+    ViewData["Title"] = "Руководитель";
+}
+
+<div class="page-header">
+    <div class="d-flex align-items-center justify-content-between">
+        <div>
+            <h1 class="m-0">@ViewData["Title"]</h1>
+            <p class="text-muted mb-0 mt-1">Аналитика и отчётность</p>
+        </div>
+        <div class="d-none d-sm-block">
+            <i class="bi bi-bar-chart-line" style="font-size: 2.5rem; opacity: 0.3;"></i>
+        </div>
+    </div>
+</div>
+
+@if (Model.Any())
+{
+    <div class="card border-warning mb-4">
+        <div class="card-header bg-warning bg-opacity-10 d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><i class="bi bi-bell me-2"></i>Уведомления (@Model.Count непрочитанных)</h5>
+            <form asp-action="MarkAllRead" method="post" class="d-inline">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn btn-sm btn-outline-warning">Отметить все как прочитанные</button>
+            </form>
+        </div>
+        <div class="card-body p-0">
+            @foreach (var n in Model)
+            {
+                <div class="d-flex align-items-start p-3 border-bottom">
+                    <i class="bi bi-person-plus text-primary me-3 mt-1"></i>
+                    <div class="flex-grow-1">
+                        <div class="fw-semibold">@n.Title</div>
+                        <div class="text-muted small">@n.Message</div>
+                        <div class="text-muted small mt-1">@n.CreatedAt.ToString("dd.MM.yyyy HH:mm")</div>
+                    </div>
+                    <form asp-action="MarkRead" asp-route-id="@n.Id" method="post" class="ms-2">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-sm btn-outline-secondary" title="Прочитано">
+                            <i class="bi bi-check-lg"></i>
+                        </button>
+                    </form>
+                </div>
+            }
+        </div>
+    </div>
+}
+
+<div class="menu-grid">
+    <div class="menu-section">
+        <h5 class="menu-section-title"><i class="bi bi-clipboard-data me-2"></i>Отчёты</h5>
+        <div class="menu-items">
+            <a asp-area="Manager" asp-controller="Reports" asp-action="CostsByObjects" class="menu-card">
+                <div class="menu-card-icon"><i class="bi bi-cash-coin"></i></div>
+                <div class="menu-card-text">
+                    <span class="menu-card-title">Затраты по объектам</span>
+                    <span class="menu-card-desc">Анализ расходов по объектам</span>
+                </div>
+                <div class="menu-card-arrow"><i class="bi bi-chevron-right"></i></div>
+            </a>
+            <a asp-area="Manager" asp-controller="Reports" asp-action="EquipmentUtilization" class="menu-card">
+                <div class="menu-card-icon"><i class="bi bi-gear"></i></div>
+                <div class="menu-card-text">
+                    <span class="menu-card-title">Загруженность оборудования</span>
+                    <span class="menu-card-desc">Статистика использования</span>
+                </div>
+                <div class="menu-card-arrow"><i class="bi bi-chevron-right"></i></div>
+            </a>
+            <a asp-area="Manager" asp-controller="Reports" asp-action="ForecastPurchases" class="menu-card">
+                <div class="menu-card-icon"><i class="bi bi-cart-plus"></i></div>
+                <div class="menu-card-text">
+                    <span class="menu-card-title">Прогноз закупок</span>
+                    <span class="menu-card-desc">Рекомендации по закупкам</span>
+                </div>
+                <div class="menu-card-arrow"><i class="bi bi-chevron-right"></i></div>
+            </a>
+            <a asp-area="Manager" asp-controller="Reports" asp-action="CostsTrend" class="menu-card">
+                <div class="menu-card-icon"><i class="bi bi-graph-up-arrow"></i></div>
+                <div class="menu-card-text">
+                    <span class="menu-card-title">Динамика затрат</span>
+                    <span class="menu-card-desc">График по месяцам</span>
+                </div>
+                <div class="menu-card-arrow"><i class="bi bi-chevron-right"></i></div>
+            </a>
+        </div>
+    </div>
+    <div class="menu-section">
+        <h5 class="menu-section-title"><i class="bi bi-clipboard-check me-2"></i>Работа</h5>
+        <div class="menu-items">
+            <a asp-area="Manager" asp-controller="WorkReport" asp-action="Index" class="menu-card">
+                <div class="menu-card-icon"><i class="bi bi-clipboard-check"></i></div>
+                <div class="menu-card-text">
+                    <span class="menu-card-title">Выполненные работы</span>
+                    <span class="menu-card-desc">Отчёт мастеров по объектам</span>
+                </div>
+                <div class="menu-card-arrow"><i class="bi bi-chevron-right"></i></div>
+            </a>
+        </div>
+    </div>
+        </div>
+    </div>
+    <div class="menu-section">
+        <h5 class="menu-section-title"><i class="bi bi-download me-2"></i>Данные</h5>
+        <div class="menu-items">
+            <a asp-area="Manager" asp-controller="Reports" asp-action="ExportAll" class="menu-card">
+                <div class="menu-card-icon"><i class="bi bi-file-earmark-spreadsheet"></i></div>
+                <div class="menu-card-text">
+                    <span class="menu-card-title">Экспорт отчётов</span>
+                    <span class="menu-card-desc">Excel файлы</span>
+                </div>
+                <div class="menu-card-arrow"><i class="bi bi-chevron-right"></i></div>
+            </a>
+            <a asp-area="Manager" asp-controller="Reports" asp-action="ImportData" class="menu-card">
+                <div class="menu-card-icon"><i class="bi bi-upload"></i></div>
+                <div class="menu-card-text">
+                    <span class="menu-card-title">Импорт данных</span>
+                    <span class="menu-card-desc">Загрузка из Excel</span>
+                </div>
+                <div class="menu-card-arrow"><i class="bi bi-chevron-right"></i></div>
+            </a>
+        </div>
+    </div>
+</div>
+
+<style>
+    .menu-grid { display: flex; flex-direction: column; gap: 1.5rem; }
+    .menu-section-title {
+        color: var(--primary-color);
+        font-weight: 600;
+        margin-bottom: 0.75rem;
+        padding-left: 0.25rem;
+    }
+    .menu-items { display: flex; flex-direction: column; gap: 0.5rem; }
+    .menu-card {
+        display: flex;
+        align-items: center;
+        padding: 1rem 1.25rem;
+        background: #fff;
+        border: 2px solid #e9ecef;
+        border-radius: 12px;
+        text-decoration: none !important;
+        transition: all 0.2s ease;
+    }
+    .menu-card:hover, .menu-card:focus {
+        border-color: var(--primary-color);
+        background: rgba(13, 110, 253, 0.03);
+        transform: translateX(4px);
+    }
+    .menu-card-icon {
+        width: 48px;
+        height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(13, 110, 253, 0.1);
+        border-radius: 10px;
+        color: var(--primary-color);
+        font-size: 1.5rem;
+        flex-shrink: 0;
+    }
+    .menu-card-text {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        margin-left: 1rem;
+        min-width: 0;
+    }
+    .menu-card-title {
+        font-weight: 600;
+        color: #212529;
+        font-size: 1rem;
+    }
+    .menu-card-desc {
+        font-size: 0.85rem;
+        color: #6c757d;
+        margin-top: 0.125rem;
+    }
+    .menu-card-arrow {
+        color: #adb5bd;
+        font-size: 1.25rem;
+        margin-left: 0.5rem;
+    }
+    @@media (min-width: 768px) {
+        .menu-items { flex-direction: row; flex-wrap: wrap; }
+        .menu-card { flex: 1 1 calc(50% - 0.5rem); min-width: 280px; }
+    }
+</style>

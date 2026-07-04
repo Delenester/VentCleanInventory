@@ -1,0 +1,88 @@
+@model VentCleanInventory.Web.Data.Entities.StockTransaction
+@using VentCleanInventory.Web.Data
+
+@{
+    ViewData["Title"] = $"Акт списания {Model.ActNumber}";
+    var info = TempData["Info"] as string;
+}
+
+@if (!string.IsNullOrWhiteSpace(info))
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle me-2"></i>@info
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <h1 class="m-0">@ViewData["Title"]</h1>
+    <a class="btn btn-outline-secondary" asp-action="Index"><i class="bi bi-arrow-left"></i> К списку</a>
+</div>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-3">
+                <div class="text-muted small">Дата акта</div>
+                <div class="fw-semibold">@(Model.ActDate?.ToString("dd.MM.yyyy") ?? "—")</div>
+            </div>
+            <div class="col-md-3">
+                <div class="text-muted small">Склад</div>
+                <div class="fw-semibold">@(Model.FromWarehouse?.Name ?? "—")</div>
+            </div>
+            <div class="col-md-3">
+                <div class="text-muted small">Причина</div>
+                <div class="fw-semibold">@(Model.WriteOffReason?.ToString() ?? "—")</div>
+            </div>
+            <div class="col-md-3">
+                <div class="text-muted small">Статус</div>
+                <div>
+                    @if (Model.ActStatus == WriteOffActStatus.Approved)
+                    {
+                        <span class="badge bg-success">Утверждён</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-warning text-dark">Черновик</span>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">Позиции</div>
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead>
+            <tr>
+                <th>Оборудование/Материал</th>
+                <th>Серийный номер</th>
+                <th class="text-end">Кол-во</th>
+                <th class="text-end">Цена</th>
+            </tr>
+            </thead>
+            <tbody>
+            @foreach (var d in Model.GetItems())
+            {
+                var inv = d.InventoryItemId.HasValue ? (ViewBag.InventoryMap as Dictionary<int, VentCleanInventory.Web.Data.Entities.InventoryItem>)?.GetValueOrDefault(d.InventoryItemId.Value) : null;
+                <tr>
+                    <td>@(inv?.Nomenclature.Name ?? "—")</td>
+                    <td>@(inv?.SerialNumber ?? "—")</td>
+                    <td class="text-end">@d.Quantity</td>
+                    <td class="text-end">@(d.UnitPrice?.ToString("C2") ?? "—")</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@if (Model.ActStatus == WriteOffActStatus.Draft)
+{
+    <form method="post" asp-action="Approve" asp-route-id="@Model.Id" class="mt-4">
+        @Html.AntiForgeryToken()
+        <button type="submit" class="btn btn-success"><i class="bi bi-check-lg"></i> Утвердить акт</button>
+    </form>
+}

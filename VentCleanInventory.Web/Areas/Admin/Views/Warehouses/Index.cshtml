@@ -1,0 +1,59 @@
+@model IReadOnlyList<VentCleanInventory.Web.Areas.Admin.Models.Warehouses.WarehouseIndexViewModel>
+
+@{
+    ViewData["Title"] = "Склады";
+}
+
+<div class="page-header">
+    <div class="d-flex align-items-center justify-content-between">
+        <div class="d-flex align-items-center gap-2">
+            <a asp-area="Admin" asp-controller="AdminHome" asp-action="Index" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i>
+            </a>
+            <h1 class="m-0">@ViewData["Title"]</h1>
+        </div>
+        <a class="btn btn-primary" asp-action="Create">
+            <i class="bi bi-plus-lg me-1"></i>Добавить
+        </a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead>
+            <tr>
+                <th>Тип</th>
+                <th>Название</th>
+                <th>Мастер</th>
+                <th class="text-end">Действия</th>
+            </tr>
+            </thead>
+            <tbody>
+            @foreach (var w in Model)
+            {
+                <tr>
+                    <td>
+                        <span class="badge bg-@(w.Type == VentCleanInventory.Web.Data.WarehouseType.Central ? "primary" : "success")">
+                            @(w.Type == VentCleanInventory.Web.Data.WarehouseType.Central ? "Центральный" : "Карманный")
+                        </span>
+                    </td>
+                    <td class="fw-semibold">@w.Name</td>
+                    <td><span class="text-muted">@w.MasterName</span></td>
+                    <td class="text-end">
+                        <a class="btn btn-outline-secondary btn-sm" asp-action="Edit" asp-route-id="@w.Id">
+                            <i class="bi bi-pencil me-1"></i>Изменить
+                        </a>
+                        <form asp-action="Delete" asp-route-id="@w.Id" method="post" class="d-inline">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-outline-danger btn-sm" onclick="return confirm('Удалить склад?');">
+                                <i class="bi bi-trash me-1"></i>Удалить
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>

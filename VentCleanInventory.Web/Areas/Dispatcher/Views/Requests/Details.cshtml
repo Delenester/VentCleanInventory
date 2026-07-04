@@ -1,0 +1,111 @@
+@model VentCleanInventory.Web.Data.Entities.StockTransaction
+
+@{
+    ViewData["Title"] = $"Заявка №{Model.Id}";
+}
+
+<div class="page-header">
+    <div class="d-flex align-items-center justify-content-between">
+        <h1 class="m-0">@ViewData["Title"]</h1>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-12 col-md-4">
+                <div class="text-muted small">Дата создания</div>
+                <div class="fw-semibold">@Model.Date.ToString("dd.MM.yyyy HH:mm")</div>
+            </div>
+            <div class="col-12 col-md-4">
+                <div class="text-muted small">Мастер</div>
+                <div class="fw-semibold">@(ViewBag.MasterName)</div>
+            </div>
+            <div class="col-12 col-md-4">
+                <div class="text-muted small">Объект</div>
+                <div class="fw-semibold">@Model.WorkObject?.Name</div>
+            </div>
+            @if (Model.Client != null)
+            {
+                <div class="col-12 col-md-4">
+                    <div class="text-muted small">Клиент</div>
+                    <div class="fw-semibold">@Model.Client.Name <span class="text-muted">(@Model.Client.Unp)</span></div>
+                </div>
+            }
+            @if (Model.Supplier != null)
+            {
+                <div class="col-12 col-md-4">
+                    <div class="text-muted small">Поставщик</div>
+                    <div class="fw-semibold">@Model.Supplier.Name</div>
+                </div>
+            }
+            @if (Model.RequestStatusValue.HasValue)
+            {
+                <div class="col-12 col-md-4">
+                    <div class="text-muted small">Статус</div>
+                    <div class="fw-semibold">
+                        @switch (Model.RequestStatusValue.Value)
+                        {
+                            case RequestStatus.New: <span class="badge bg-warning text-dark">Новая</span> break;
+                            case RequestStatus.Approved: <span class="badge bg-success">Утверждена</span> break;
+                            case RequestStatus.ClientConfirmed: <span class="badge bg-info text-dark">Подтверждён</span> break;
+                            case RequestStatus.Assigned: <span class="badge bg-primary">Назначена</span> break;
+                            case RequestStatus.InProgress: <span class="badge bg-secondary">В работе</span> break;
+                            case RequestStatus.Completed: <span class="badge bg-secondary">Выполнена</span> break;
+                            case RequestStatus.Rejected: <span class="badge bg-danger">Отклонена</span> break;
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <i class="bi bi-list-ul me-2"></i>Позиции заявки
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead>
+            <tr>
+                <th>Номенклатура</th>
+                <th class="text-end">Запрошено</th>
+            </tr>
+            </thead>
+            <tbody>
+            @foreach (var i in Model.GetItems())
+            {
+                <tr>
+                    <td>@(i.NomenclatureName ?? $"№{i.NomenclatureId}")</td>
+                    <td class="text-end fw-semibold">@i.Quantity</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="d-flex gap-2 mt-4">
+    <a class="btn btn-outline-secondary" asp-action="Index">
+        <i class="bi bi-arrow-left me-1"></i>К списку
+    </a>
+    @if (Model.RequestStatusValue == RequestStatus.New)
+    {
+        <a class="btn btn-primary" asp-action="Issue" asp-route-id="@Model.Id">
+            <i class="bi bi-box-arrow-up me-1"></i>Выдать
+        </a>
+    }
+    @if (Model.RequestStatusValue == RequestStatus.ClientConfirmed
+        || Model.RequestStatusValue == RequestStatus.Assigned
+        || Model.RequestStatusValue == RequestStatus.InProgress)
+    {
+        <form asp-action="CompleteWork" method="post" class="d-inline">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="id" value="@Model.Id" />
+            <button type="submit" class="btn btn-success">
+                <i class="bi bi-check2-circle me-1"></i>Завершить работу
+            </button>
+        </form>
+    }
+</div>

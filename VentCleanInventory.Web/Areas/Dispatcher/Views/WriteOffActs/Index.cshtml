@@ -1,0 +1,73 @@
+@model IReadOnlyList<VentCleanInventory.Web.Data.Entities.StockTransaction>
+@using VentCleanInventory.Web.Data
+
+@{
+    ViewData["Title"] = "Акты списания";
+    var info = TempData["Info"] as string;
+    var status = ViewBag.StatusFilter as WriteOffActStatus?;
+}
+
+@if (!string.IsNullOrWhiteSpace(info))
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle me-2"></i>@info
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <h1 class="m-0">@ViewData["Title"]</h1>
+    <div class="d-flex gap-2">
+        <a class="btn btn-sm @(status == null ? "btn-primary" : "btn-outline-primary")" asp-all-route-data="new Dictionary<string,string>()">Все</a>
+        <a class="btn btn-sm @(status == WriteOffActStatus.Draft ? "btn-primary" : "btn-outline-primary")" asp-route-status="@((int)WriteOffActStatus.Draft)">Черновики</a>
+        <a class="btn btn-sm @(status == WriteOffActStatus.Approved ? "btn-primary" : "btn-outline-primary")" asp-route-status="@((int)WriteOffActStatus.Approved)">Утверждённые</a>
+    </div>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info"><i class="bi bi-inbox me-2"></i>Нет актов списания</div>
+}
+else
+{
+    <div class="card">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                <tr>
+                    <th>Номер</th>
+                    <th>Дата</th>
+                    <th>Склад</th>
+                    <th>Создал</th>
+                    <th>Статус</th>
+                    <th class="text-end"></th>
+                </tr>
+                </thead>
+                <tbody>
+                @foreach (var a in Model)
+                {
+                    <tr>
+                        <td class="fw-semibold">@a.ActNumber</td>
+                        <td>@(a.ActDate?.ToString("dd.MM.yyyy") ?? "—")</td>
+                        <td>@(a.FromWarehouse?.Name ?? "—")</td>
+                        <td>@(((Dictionary<string, string>)ViewBag.UserNames).GetValueOrDefault(a.UserId ?? "", "—"))</td>
+                        <td>
+                            @if (a.ActStatus == WriteOffActStatus.Approved)
+                            {
+                                <span class="badge bg-success">Утверждён</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-warning text-dark">Черновик</span>
+                            }
+                        </td>
+                        <td class="text-end">
+                            <a class="btn btn-outline-secondary btn-sm" asp-action="Details" asp-route-id="@a.Id"><i class="bi bi-eye"></i> Открыть</a>
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}

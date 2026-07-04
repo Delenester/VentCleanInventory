@@ -1,0 +1,91 @@
+@model VentCleanInventory.Web.Areas.Manager.Models.Reports.WorkReportViewModel
+
+@{
+    ViewData["Title"] = "Отчёт о выполненных работах";
+}
+
+<div class="page-header">
+    <div class="d-flex align-items-center justify-content-between">
+        <h1 class="m-0">@ViewData["Title"]</h1>
+        <a asp-area="Manager" asp-controller="ManagerHome" asp-action="Index" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i>Назад
+        </a>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3 vci-touch-form">
+            <div class="col-12 col-md-4">
+                <label class="form-label">Дата начала</label>
+                <input class="form-control" type="date" name="from" value="@Model.From.ToString("yyyy-MM-dd")" />
+            </div>
+            <div class="col-12 col-md-4">
+                <label class="form-label">Дата окончания</label>
+                <input class="form-control" type="date" name="to" value="@Model.To.ToString("yyyy-MM-dd")" />
+            </div>
+            <div class="col-12 col-md-4 d-grid align-self-end">
+                <button class="btn btn-primary" type="submit">
+                    <i class="bi bi-search me-1"></i>Показать
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead>
+            <tr>
+                <th>Мастер</th>
+                <th>Объект</th>
+                <th>Зона</th>
+                <th>Дата</th>
+                <th class="text-end">Метры</th>
+                <th class="text-end">Решётки</th>
+                <th>Материалы</th>
+                <th>Фото</th>
+            </tr>
+            </thead>
+            <tbody>
+            @if (!Model.Rows.Any())
+            {
+                <tr>
+                    <td colspan="8" class="text-center text-muted py-4">
+                        <i class="bi bi-inbox d-block mb-2" style="font-size: 2rem;"></i>
+                        Нет данных за выбранный период
+                    </td>
+                </tr>
+            }
+            else
+            {
+                @foreach (var r in Model.Rows)
+                {
+                    <tr role="button" class="align-middle" onclick="window.location.href='@Url.Action("Details", new { id = r.Id })'" style="cursor:pointer;">
+                        <td class="fw-semibold">@r.MasterName</td>
+                        <td>@r.ObjectName</td>
+                        <td>@(r.ZoneName ?? "—")</td>
+                        <td>@r.WorkDate.ToString("dd.MM.yyyy")</td>
+                        <td class="text-end">@(r.Meters?.ToString("N2") ?? "—")</td>
+                        <td class="text-end">@(r.Grids?.ToString() ?? "—")</td>
+                        <td>@(r.MaterialsUsed ?? "—")</td>
+                        <td>
+                            @if (!string.IsNullOrWhiteSpace(r.PhotoPath))
+                            {
+                                <a href="@r.PhotoPath" target="_blank" onclick="event.stopPropagation();">
+                                    <img src="@r.PhotoPath" class="img-thumbnail" style="max-height: 60px;" alt="Фото" />
+                                </a>
+                            }
+                            else
+                            {
+                                <span class="text-muted">—</span>
+                            }
+                        </td>
+                    </tr>
+                }
+            }
+            </tbody>
+        </table>
+    </div>
+</div>

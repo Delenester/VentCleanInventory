@@ -1,0 +1,117 @@
+@model VentCleanInventory.Web.Areas.Dispatcher.Models.Returns.ReturnCreateViewModel
+
+@{
+    ViewData["Title"] = "Возврат от мастера";
+    var info = TempData["Info"] as string;
+}
+
+@if (!string.IsNullOrWhiteSpace(info))
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle me-2"></i>@info
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<div class="page-header">
+    <div class="d-flex align-items-center gap-2">
+        <a asp-area="Dispatcher" asp-controller="DispatcherHome" asp-action="Index" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i>
+        </a>
+        <h1 class="m-0">@ViewData["Title"]</h1>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <form asp-action="Load" method="post" class="vci-touch-form">
+            @Html.AntiForgeryToken()
+            <div class="row g-3">
+                <div class="col-12 col-md-6">
+                    <label asp-for="MasterUserId" class="form-label required">Мастер</label>
+                    <select asp-for="MasterUserId" class="form-select">
+                        <option value="">— выберите —</option>
+                        @foreach (var m in Model.Masters)
+                        {
+                            <option value="@m.Id">@m.Display</option>
+                        }
+                    </select>
+                    <span asp-validation-for="MasterUserId" class="text-danger small"></span>
+                </div>
+                <div class="col-12 col-md-6 d-grid align-self-end">
+                    <button type="submit" class="btn btn-outline-primary">
+                        <i class="bi bi-search me-1"></i>Показать склад мастера
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+@if (Model.Lines.Count > 0)
+{
+    <div class="card">
+        <div class="card-body">
+            <form asp-action="Apply" method="post" class="vci-touch-form">
+                @Html.AntiForgeryToken()
+                <input type="hidden" asp-for="MasterUserId" />
+                <input type="hidden" asp-for="CentralWarehouseId" />
+                <input type="hidden" asp-for="MobileWarehouseId" />
+
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                        <tr>
+                            <th>Позиция</th>
+                            <th class="text-end">Остаток</th>
+                            <th class="text-end" style="width: 120px">К возврату</th>
+                            <th style="width: 160px">Состояние</th>
+                            <th>Примечание</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        @for (var i = 0; i < Model.Lines.Count; i++)
+                        {
+                            <tr>
+                                <td class="fw-semibold">
+                                    @Model.Lines[i].ItemDisplay
+                                    <input type="hidden" asp-for="Lines[i].InventoryItemId" />
+                                    <input type="hidden" asp-for="Lines[i].ItemDisplay" />
+                                    <input type="hidden" asp-for="Lines[i].Available" />
+                                </td>
+                                <td class="text-end">@Model.Lines[i].Available</td>
+                                <td>
+                                    <input asp-for="Lines[i].Quantity" class="form-control text-end" />
+                                </td>
+                                <td>
+                                    <select asp-for="Lines[i].Condition" class="form-select">
+                                        <option value="">—</option>
+                                        <option value="@VentCleanInventory.Web.Data.EquipmentCondition.Ok">Исправно</option>
+                                        <option value="@VentCleanInventory.Web.Data.EquipmentCondition.Wear">Следы износа</option>
+                                        <option value="@VentCleanInventory.Web.Data.EquipmentCondition.NeedsMaintenance">Требует ТО</option>
+                                    </select>
+                                </td>
+                                <td>
+                                    <input asp-for="Lines[i].ConditionNote" class="form-control" placeholder="Комментарий..." />
+                                </td>
+                            </tr>
+                        }
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-check-lg me-1"></i>Провести возврат
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

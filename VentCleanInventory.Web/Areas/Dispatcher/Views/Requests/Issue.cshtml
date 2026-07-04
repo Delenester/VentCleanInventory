@@ -1,0 +1,91 @@
+@model VentCleanInventory.Web.Areas.Dispatcher.Models.Requests.RequestIssueViewModel
+
+@{
+    ViewData["Title"] = "Выдача по заявке";
+}
+
+<div class="page-header">
+    <div class="d-flex align-items-center justify-content-between">
+        <h1 class="m-0">@ViewData["Title"]</h1>
+        <a class="btn btn-outline-secondary" asp-action="Index">
+            <i class="bi bi-arrow-left me-1"></i>К списку
+        </a>
+    </div>
+</div>
+
+<div class="alert alert-info mb-4">
+    <i class="bi bi-info-circle me-2"></i>@Model.Header
+</div>
+
+@if (!Model.Lines.Any())
+{
+    <div class="alert alert-warning">
+        <i class="bi bi-exclamation-triangle me-2"></i>Нет доступных позиций для выдачи. Возможно, нужные материалы/оборудование отсутствуют на центральном складе.
+    </div>
+    <a class="btn btn-outline-secondary" asp-action="Index">Вернуться к списку</a>
+}
+else
+{
+<div class="card">
+    <div class="card-body">
+        <form method="post" class="vci-touch-form">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="RequestId" />
+            <input type="hidden" asp-for="MasterUserId" />
+            <input type="hidden" asp-for="CentralWarehouseId" />
+            <input type="hidden" asp-for="MobileWarehouseId" />
+            <input type="hidden" asp-for="Header" />
+
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead>
+                    <tr>
+                        <th>Позиция</th>
+                        <th class="text-end">Остаток</th>
+                        <th class="text-end" style="width: 120px">К выдаче</th>
+                        <th style="width: 160px">Состояние</th>
+                        <th>Примечание</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    @for (var i = 0; i < Model.Lines.Count; i++)
+                    {
+                        <tr>
+                            <td class="fw-semibold">
+                                @Model.Lines[i].ItemDisplay
+                                <input type="hidden" asp-for="Lines[i].InventoryItemId" />
+                                <input type="hidden" asp-for="Lines[i].ItemDisplay" />
+                                <input type="hidden" asp-for="Lines[i].Available" />
+                            </td>
+                            <td class="text-end">@Model.Lines[i].Available</td>
+                            <td>
+                                <input asp-for="Lines[i].Quantity" class="form-control text-end" />
+                            </td>
+                            <td>
+                                <select asp-for="Lines[i].Condition" class="form-select">
+                                    <option value="">—</option>
+                                    <option value="@VentCleanInventory.Web.Data.EquipmentCondition.Ok">Исправно</option>
+                                    <option value="@VentCleanInventory.Web.Data.EquipmentCondition.Wear">Следы износа</option>
+                                    <option value="@VentCleanInventory.Web.Data.EquipmentCondition.NeedsMaintenance">Требует ТО</option>
+                                </select>
+                            </td>
+                            <td>
+                                <input asp-for="Lines[i].ConditionNote" class="form-control" placeholder="Комментарий..." />
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="mt-4">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="bi bi-check-lg me-1"></i>Провести выдачу
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+}

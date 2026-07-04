@@ -1,0 +1,91 @@
+@model VentCleanInventory.Web.Areas.Manager.Models.Reports.ForecastPurchasesViewModel
+
+@{
+    ViewData["Title"] = "Прогноз закупок";
+}
+
+<div class="page-header">
+    <div class="d-flex align-items-center justify-content-between">
+        <h1 class="m-0">@ViewData["Title"]</h1>
+        <div class="d-flex gap-2">
+            <a asp-area="Manager" asp-controller="ManagerHome" asp-action="Index" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i>Назад
+            </a>
+            <a class="btn btn-outline-success" asp-action="ForecastPurchasesExcel" asp-route-months="@Model.Months">
+                <i class="bi bi-file-earmark-excel me-1"></i>Экспорт
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3 vci-touch-form">
+            <div class="col-12 col-md-4">
+                <label class="form-label">Период (месяцев)</label>
+                <input class="form-control" type="number" min="1" max="36" name="months" value="@Model.Months" />
+            </div>
+            <div class="col-12 col-md-4 d-grid align-self-end">
+                <button class="btn btn-primary" type="submit">
+                    <i class="bi bi-calculator me-1"></i>Рассчитать
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead>
+            <tr>
+                <th>Материал</th>
+                <th class="text-end">Среднемес. расход</th>
+                <th class="text-end">Рекомендация на 1 мес.</th>
+                <th class="text-end">Остаток (центр.)</th>
+            </tr>
+            </thead>
+            <tbody>
+            @if (!Model.Rows.Any())
+            {
+                <tr>
+                    <td colspan="4" class="text-center text-muted py-4">
+                        <i class="bi bi-inbox d-block mb-2" style="font-size: 2rem;"></i>
+                        Нет материалов с недостаточным остатком
+                    </td>
+                </tr>
+            }
+            else
+            {
+                @foreach (var r in Model.Rows)
+                {
+                    <tr>
+                        <td class="fw-semibold">@r.MaterialName</td>
+                        <td class="text-end">@r.AvgMonthlyUsage.ToString("N2")</td>
+                        <td class="text-end">
+                            <span class="text-success fw-semibold">@r.RecommendedNextMonth.ToString("N2")</span>
+                        </td>
+                        <td class="text-end">
+                            @if (r.CentralBalance < r.RecommendedNextMonth)
+                            {
+                                <span class="text-danger">@r.CentralBalance.ToString("N2")</span>
+                            }
+                            else
+                            {
+                                <span>@r.CentralBalance.ToString("N2")</span>
+                            }
+                        </td>
+                    </tr>
+                }
+            }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@if (Model.Rows.Any())
+{
+    <small class="text-muted mt-2 d-block">
+        <i class="bi bi-info-circle me-1"></i>Показаны материалы, остаток которых меньше прогнозируемой потребности на следующий месяц.
+    </small>
+}

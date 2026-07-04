@@ -1,0 +1,81 @@
+@model IReadOnlyList<VentCleanInventory.Web.Areas.Dispatcher.Controllers.WorkLogListItem>
+@{
+    ViewData["Title"] = "Выполненные работы";
+    var total = ViewBag.Total as int? ?? 0;
+    var page = ViewBag.Page as int? ?? 1;
+    var totalPages = ViewBag.TotalPages as int? ?? 1;
+}
+
+<div class="page-header d-flex align-items-center justify-content-between mb-4">
+    <h1 class="m-0">@ViewData["Title"]</h1>
+    <span class="text-muted small">Всего записей: @total</span>
+</div>
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>№</th>
+                    <th>Объект</th>
+                    <th>Мастер</th>
+                    <th>Дата</th>
+                    <th>Зона</th>
+                    <th class="text-center">Статус</th>
+                    <th class="text-end"></th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Any())
+                {
+                    <tr><td colspan="7" class="text-muted text-center py-4">Нет выполненных работ</td></tr>
+                }
+                @foreach (var w in Model)
+                {
+                    <tr class="align-middle">
+                        <td class="fw-semibold">@w.Id</td>
+                        <td>@w.ObjectName</td>
+                        <td>@w.MasterName</td>
+                        <td>@w.WorkDate.ToString("dd.MM.yyyy")</td>
+                        <td>@(w.ZoneName ?? "—")</td>
+                        <td class="text-center">
+                            @if (w.IsCompleted)
+                            {
+                                <span class="badge bg-success">Выполнена</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-warning text-dark">В работе</span>
+                            }
+                        </td>
+                        <td class="text-end">
+                            <a asp-action="Details" asp-route-id="@w.Id" class="btn btn-outline-primary btn-sm">
+                                <i class="bi bi-eye"></i> Подробнее
+                            </a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@if (totalPages > 1)
+{
+    <nav class="mt-3">
+        <ul class="pagination justify-content-center">
+            <li class="page-item @(page <= 1 ? "disabled" : "")">
+                <a class="page-link" asp-route-page="@(page - 1)">&laquo;</a>
+            </li>
+            @for (int p = 1; p <= totalPages; p++)
+            {
+                <li class="page-item @(p == page ? "active" : "")">
+                    <a class="page-link" asp-route-page="@p">@p</a>
+                </li>
+            }
+            <li class="page-item @(page >= totalPages ? "disabled" : "")">
+                <a class="page-link" asp-route-page="@(page + 1)">&raquo;</a>
+            </li>
+        </ul>
+    </nav>
+}

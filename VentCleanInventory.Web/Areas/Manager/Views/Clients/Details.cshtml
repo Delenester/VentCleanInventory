@@ -1,0 +1,152 @@
+@model VentCleanInventory.Web.Data.ApplicationUser
+@{
+    ViewData["Title"] = $"Клиент: {Model.FullName}";
+    var org = ViewBag.Organization as VentCleanInventory.Web.Data.Entities.Organization;
+    var requests = ViewBag.Requests as List<VentCleanInventory.Web.Data.Entities.StockTransaction>;
+}
+
+<div class="page-header">
+    <div class="d-flex align-items-center gap-2">
+        <a asp-action="Index" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i>
+        </a>
+        <div>
+            <h1 class="m-0">@Model.FullName</h1>
+            <p class="text-muted mb-0 mt-1">Карточка клиента</p>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-6">
+        <div class="card mb-4">
+            <div class="card-header"><i class="bi bi-person me-1"></i>Контактные данные</div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-4">ФИО</dt>
+                    <dd class="col-sm-8">@Model.FullName</dd>
+
+                    <dt class="col-sm-4">Email</dt>
+                    <dd class="col-sm-8">@Model.Email</dd>
+
+                    <dt class="col-sm-4">Телефон</dt>
+                    <dd class="col-sm-8">@(Model.PhoneContact ?? "—")</dd>
+
+                    <dt class="col-sm-4">Договор</dt>
+                    <dd class="col-sm-8">@(Model.ContractNumber ?? "—")</dd>
+
+                    <dt class="col-sm-4">Расчётный счёт</dt>
+                    <dd class="col-sm-8">@(Model.BankAccount ?? "—")</dd>
+
+                    <dt class="col-sm-4">Банк</dt>
+                    <dd class="col-sm-8">@(Model.BankName ?? "—")</dd>
+
+                    <dt class="col-sm-4">БИК</dt>
+                    <dd class="col-sm-8">@(Model.BIK ?? "—")</dd>
+
+                    <dt class="col-sm-4">Статус</dt>
+                    <dd class="col-sm-8">
+                        @if (Model.IsApproved)
+                        {
+                            <span class="badge bg-success">Одобрен</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-warning">Ожидает</span>
+                        }
+                    </dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card mb-4">
+            <div class="card-header"><i class="bi bi-building me-1"></i>Организация</div>
+            <div class="card-body">
+                @if (org != null)
+                {
+                    <dl class="row mb-0">
+                        <dt class="col-sm-4">Наименование</dt>
+                        <dd class="col-sm-8">@org.Name</dd>
+
+                        <dt class="col-sm-4">УНП</dt>
+                        <dd class="col-sm-8">@(org.Unp ?? "—")</dd>
+
+                        <dt class="col-sm-4">Адрес</dt>
+                        <dd class="col-sm-8">@(org.LegalAddress ?? "—")</dd>
+
+                        <dt class="col-sm-4">Контакты</dt>
+                        <dd class="col-sm-8">@(org.ContactInfo ?? "—")</dd>
+                    </dl>
+                }
+                else
+                {
+                    <p class="text-muted mb-0">Организация не привязана</p>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header"><i class="bi bi-clipboard me-1"></i>Заявки клиента</div>
+    @if (requests != null && requests.Count > 0)
+    {
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>№</th>
+                        <th>Дата</th>
+                        <th>Статус</th>
+                        <th>Примечание</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var r in requests)
+                    {
+                        <tr>
+                            <td>@r.Id</td>
+                            <td>@r.Date.ToString("dd.MM.yyyy")</td>
+                            <td>
+                                @switch (r.RequestStatusValue)
+                                {
+                                    case VentCleanInventory.Web.Data.RequestStatus.New:
+                                        <span class="badge bg-warning text-dark">Новая</span>
+                                        break;
+                                    case VentCleanInventory.Web.Data.RequestStatus.Approved:
+                                        <span class="badge bg-success">Одобрена</span>
+                                        break;
+                                    case VentCleanInventory.Web.Data.RequestStatus.ClientConfirmed:
+                                        <span class="badge bg-info text-dark">Подтверждена</span>
+                                        break;
+                                    case VentCleanInventory.Web.Data.RequestStatus.Assigned:
+                                        <span class="badge bg-primary">Назначена</span>
+                                        break;
+                                    case VentCleanInventory.Web.Data.RequestStatus.InProgress:
+                                        <span class="badge bg-secondary">В работе</span>
+                                        break;
+                                    case VentCleanInventory.Web.Data.RequestStatus.Completed:
+                                        <span class="badge bg-success">Выполнена</span>
+                                        break;
+                                    case VentCleanInventory.Web.Data.RequestStatus.Rejected:
+                                        <span class="badge bg-danger">Отклонена</span>
+                                        break;
+                                    default:
+                                        <span class="badge bg-secondary">—</span>
+                                        break;
+                                }
+                            </td>
+                            <td class="small">@(r.Note ?? "—")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <div class="card-body text-muted">Заявок нет</div>
+    }
+</div>

@@ -1,0 +1,218 @@
+@model VentCleanInventory.Web.Models.WorkLogDetailViewModel
+@{
+    var backUrl = ViewBag.BackUrl ?? "javascript:history.back()";
+    var backText = ViewBag.BackText ?? "Назад";
+}
+
+<div class="page-header d-flex align-items-center gap-2 mb-4">
+    <a href="@backUrl" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i> @backText
+    </a>
+    <h1 class="m-0">Работа #@Model.Id</h1>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-info-circle me-1"></i>Информация о работе</span>
+                @if (Model.IsCompleted)
+                {
+                    <span class="badge bg-success">Выполнена</span>
+                }
+                else
+                {
+                    <span class="badge bg-warning text-dark">В процессе</span>
+                }
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="text-muted small">Объект</div>
+                        <div class="fw-semibold fs-5">@Model.ObjectName</div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="text-muted small">Адрес</div>
+                        <div class="fw-semibold">@Model.ObjectAddress</div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-muted small">Мастер</div>
+                        <div class="fw-semibold">@Model.MasterName</div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-muted small">Дата выполнения</div>
+                        <div class="fw-semibold">@Model.WorkDate.ToString("dd.MM.yyyy HH:mm")</div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-muted small">Зона</div>
+                        <div class="fw-semibold">@(Model.ZoneName ?? "—")</div>
+                    </div>
+                    @if (!string.IsNullOrWhiteSpace(Model.Description))
+                    {
+                        <div class="col-12">
+                            <div class="text-muted small">Описание</div>
+                            <div>@Model.Description</div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header"><i class="bi bi-rulers me-1"></i>Параметры работ</div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-4 text-center">
+                        <div class="fs-2 fw-bold text-primary">@(Model.Meters?.ToString("N2") ?? "—")</div>
+                        <div class="text-muted small">пог. метров</div>
+                    </div>
+                    <div class="col-4 text-center">
+                        <div class="fs-2 fw-bold text-success">@(Model.Grids?.ToString() ?? "—")</div>
+                        <div class="text-muted small">решёток</div>
+                    </div>
+                    <div class="col-4 text-center">
+                        <div class="fs-2 fw-bold text-warning">
+                            @if (Model.ChecklistDone == true)
+                            {
+                                <i class="bi bi-check-circle-fill text-success"></i>
+                            }
+                            else if (Model.ChecklistDone == false)
+                            {
+                                <i class="bi bi-x-circle-fill text-danger"></i>
+                            }
+                            else
+                            {
+                                <i class="bi bi-dash-circle text-muted"></i>
+                            }
+                        </div>
+                        <div class="text-muted small">чек-лист</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(Model.MaterialsUsed))
+        {
+            <div class="card mb-4">
+                <div class="card-header"><i class="bi bi-box-seam me-1"></i>Использованные материалы</div>
+                <div class="card-body">
+                    <div>@Model.MaterialsUsed</div>
+                </div>
+            </div>
+        }
+
+        @if (!string.IsNullOrWhiteSpace(Model.PhotoPath))
+        {
+            <div class="card mb-4">
+                <div class="card-header"><i class="bi bi-camera me-1"></i>Фотоотчёт</div>
+                <div class="card-body text-center">
+                    <a href="@Model.PhotoPath" target="_blank">
+                        <img src="@Model.PhotoPath" class="img-fluid img-thumbnail" style="max-height:400px;" alt="Фото работы" />
+                    </a>
+                </div>
+            </div>
+        }
+    </div>
+
+    <div class="col-lg-4">
+        @if (Model.Checklist.Count > 0)
+        {
+            <div class="card mb-4">
+                <div class="card-header"><i class="bi bi-list-check me-1"></i>Чек-лист</div>
+                <div class="table-responsive">
+                    <table class="table table-sm mb-0">
+                        <thead>
+                            <tr>
+                                <th>Пункт</th>
+                                <th class="text-center">Статус</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var c in Model.Checklist)
+                            {
+                                <tr>
+                                    <td>@c.ItemName</td>
+                                    <td class="text-center">
+                                        @if (c.IsDone)
+                                        {
+                                            <i class="bi bi-check-circle-fill text-success"></i>
+                                        }
+                                        else
+                                        {
+                                            <i class="bi bi-x-circle-fill text-danger"></i>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (!string.IsNullOrWhiteSpace(c.Note))
+                                        {
+                                            <i class="bi bi-chat-dots text-muted" title="@c.Note"></i>
+                                        }
+                                        @if (!string.IsNullOrWhiteSpace(c.PhotoPath))
+                                        {
+                                            <a href="@c.PhotoPath" target="_blank">
+                                                <i class="bi bi-camera text-primary"></i>
+                                            </a>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
+
+        @if (Model.RelatedRequestId.HasValue)
+        {
+            <div class="card mb-4">
+                <div class="card-header"><i class="bi bi-file-text me-1"></i>Связанная заявка</div>
+                <div class="card-body">
+                    <div class="mb-2">
+                        <span class="text-muted small">№ заявки:</span>
+                        <span class="fw-semibold">#@Model.RelatedRequestId</span>
+                    </div>
+                    <div class="mb-2">
+                        <span class="text-muted small">Статус:</span>
+                        <span>@(Model.RelatedRequestStatus ?? "—")</span>
+                    </div>
+                    @if (!string.IsNullOrWhiteSpace(Model.ContractNumber))
+                    {
+                        <a asp-area="Manager" asp-controller="Contract" asp-action="Export" asp-route-id="@Model.RelatedRequestId"
+                           class="btn btn-outline-primary btn-sm w-100">
+                            <i class="bi bi-download"></i> Договор @Model.ContractNumber
+                        </a>
+                    }
+                </div>
+            </div>
+        }
+
+        @if (Model.Defects.Count > 0)
+        {
+            <div class="card mb-4">
+                <div class="card-header"><i class="bi bi-exclamation-triangle me-1"></i>Дефекты</div>
+                <div class="card-body p-2">
+                    @foreach (var d in Model.Defects)
+                    {
+                        <div class="border rounded p-2 mb-2">
+                            <div class="small fw-semibold">@d.Description</div>
+                            <div class="small text-muted">
+                                @d.CreatedAt.ToString("dd.MM.yyyy")
+                                @if (!string.IsNullOrWhiteSpace(d.ZoneName))
+                                {
+                                    <span>&middot; @d.ZoneName</span>
+                                }
+                            </div>
+                            @if (!string.IsNullOrWhiteSpace(d.PhotoPath))
+                            {
+                                <a href="@d.PhotoPath" target="_blank">
+                                    <img src="@d.PhotoPath" class="img-thumbnail mt-1" style="max-height:80px;" alt="Фото дефекта" />
+                                </a>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+</div>

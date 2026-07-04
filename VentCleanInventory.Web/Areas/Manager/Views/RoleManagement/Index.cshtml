@@ -1,0 +1,68 @@
+@model RoleManagementViewModel
+
+@{
+    ViewData["Title"] = "Управление ролями";
+    var info = TempData["Info"] as string;
+    var error = TempData["Error"] as string;
+    var restrictedRoles = new[] { "Администратор", "Руководитель" };
+}
+
+@if (!string.IsNullOrWhiteSpace(info))
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert"><i class="bi bi-check-circle me-2"></i>@info<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+}
+@if (!string.IsNullOrWhiteSpace(error))
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert"><i class="bi bi-exclamation-triangle me-2"></i>@error<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+}
+
+<div class="page-header">
+    <div class="d-flex align-items-center gap-2">
+        <a asp-area="Manager" asp-controller="ManagerHome" asp-action="Index" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i>
+        </a>
+        <h1 class="m-0">@ViewData["Title"]</h1>
+    </div>
+    <p class="text-muted mb-0 mt-1">Назначение ролей сотрудникам. Роли «Администратор» и «Руководитель» недоступны.</p>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th>Логин</th>
+                <th>Имя</th>
+                <th>Текущая роль</th>
+                <th>Новая роль</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var user in Model.Users)
+            {
+                var currentRole = Model.UserRoles.GetValueOrDefault(user.Id, [])!.FirstOrDefault() ?? "—";
+                var availableRoles = Model.AllRoles.Where(r => !restrictedRoles.Contains(r)).ToList();
+                <tr>
+                    <td>@user.UserName</td>
+                    <td>@user.FullName</td>
+                    <td><span class="badge bg-info">@currentRole</span></td>
+                    <td>
+                        <form asp-action="ChangeRole" method="post" class="d-flex gap-2 align-items-center">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="userId" value="@user.Id" />
+                            <select name="newRole" class="form-select form-select-sm" style="width:auto;">
+                                @foreach (var role in availableRoles)
+                                {
+                                    <option value="@role" selected="@(role == currentRole)">@role</option>
+                                }
+                            </select>
+                            <button type="submit" class="btn btn-sm btn-outline-primary" onclick="return confirm('Изменить роль пользователю @user.UserName?');">
+                                <i class="bi bi-check-lg"></i>
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

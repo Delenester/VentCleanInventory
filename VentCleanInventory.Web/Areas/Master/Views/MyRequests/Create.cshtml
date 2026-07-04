@@ -1,0 +1,140 @@
+@model VentCleanInventory.Web.Areas.Master.Models.MyRequests.RequestCreateViewModel
+
+@{
+    ViewData["Title"] = "Заявка на получение";
+    var info = TempData["Info"] as string;
+}
+
+@if (!string.IsNullOrWhiteSpace(info))
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle me-2"></i>@info
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<div class="page-header">
+    <div class="d-flex align-items-center gap-2">
+        <a asp-area="Master" asp-controller="MasterHome" asp-action="Index" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i>
+        </a>
+        <h1 class="m-0">@ViewData["Title"]</h1>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form method="post" class="vci-touch-form" id="reqForm">
+            @Html.AntiForgeryToken()
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+            <div class="row g-3 mb-4">
+                <div class="col-md-6">
+                    <label asp-for="WorkObjectId" class="form-label required">Объект</label>
+                    <select asp-for="WorkObjectId" class="form-select">
+                        <option value="">— выберите —</option>
+                        @foreach (var o in Model.Objects)
+                        {
+                            <option value="@o.Id">@o.Name</option>
+                        }
+                    </select>
+                    <span asp-validation-for="WorkObjectId" class="text-danger small"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="ClientId" class="form-label">Клиент (юр. лицо)</label>
+                    <select asp-for="ClientId" class="form-select">
+                        <option value="">— не указан —</option>
+                        @foreach (var c in Model.Clients)
+                        {
+                            <option value="@c.Id">@c.Name (@c.Unp)</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="SupplierId" class="form-label">Поставщик</label>
+                    <select asp-for="SupplierId" class="form-select">
+                        <option value="">— не указан —</option>
+                        @foreach (var s in Model.Suppliers)
+                        {
+                            <option value="@s.Id">@s.Name</option>
+                        }
+                    </select>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-borderless mb-3" id="linesTable">
+                    <thead>
+                    <tr>
+                        <th>Номенклатура</th>
+                        <th style="width: 100px">Кол-во</th>
+                        <th style="width: 50px"></th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    @for (var i = 0; i < Model.Lines.Count; i++)
+                    {
+                        <tr>
+                            <td>
+                                <select asp-for="Lines[i].NomenclatureId" class="form-select">
+                                    <option value="">— выберите —</option>
+                                    @foreach (var n in Model.Nomenclatures)
+                                    {
+                                        <option value="@n.Id">@n.Name</option>
+                                    }
+                                </select>
+                            </td>
+                            <td>
+                                <input asp-for="Lines[i].Quantity" class="form-control text-end" />
+                            </td>
+                            <td class="text-center">
+                                <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeRow(this)">
+                                    <i class="bi bi-x-lg"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="button" class="btn btn-outline-primary flex-grow-1" onclick="addRow()">
+                    <i class="bi bi-plus-lg me-1"></i>Добавить
+                </button>
+                <button type="submit" class="btn btn-primary flex-grow-1">
+                    <i class="bi bi-send me-1"></i>Отправить
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        const nomHtml = `@Html.Raw(string.Join("", Model.Nomenclatures.Select(n => $"<option value=\\\"{n.Id}\\\">{System.Net.WebUtility.HtmlEncode(n.Name)}</option>")))`;
+        function addRow() {
+            const tbody = document.querySelector('#linesTable tbody');
+            const index = tbody.querySelectorAll('tr').length;
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>
+                  <select class="form-select" name="Lines[${index}].NomenclatureId">
+                    <option value="">— выберите —</option>
+                    ${nomHtml}
+                  </select>
+                </td>
+                <td><input class="form-control text-end" name="Lines[${index}].Quantity" value="1" /></td>
+                <td class="text-center"><button type="button" class="btn btn-outline-danger btn-sm" onclick="removeRow(this)"><i class="bi bi-x-lg"></i></button></td>
+            `;
+            tbody.appendChild(tr);
+        }
+        function removeRow(btn) { 
+            const tbody = document.querySelector('#linesTable tbody');
+            if (tbody.querySelectorAll('tr').length > 1) {
+                btn.closest('tr')?.remove();
+            }
+        }
+    </script>
+}

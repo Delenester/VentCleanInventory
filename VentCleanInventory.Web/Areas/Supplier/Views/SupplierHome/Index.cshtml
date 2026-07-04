@@ -1,0 +1,102 @@
+@model VentCleanInventory.Web.Areas.Supplier.Models.SupplierPortalViewModel
+
+@{
+    ViewData["Title"] = "Личный кабинет поставщика";
+}
+
+<div class="page-header">
+    <h1 class="m-0">@ViewData["Title"]</h1>
+    <p class="text-muted mb-0 mt-1">Информация об организации, договорах и заявках</p>
+</div>
+
+@if (Model.Supplier is null)
+{
+    <div class="alert alert-warning">Организация не привязана к учётной записи. Обратитесь к администратору.</div>
+}
+else
+{
+    <div class="card mb-4">
+        <div class="card-header">Организация</div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <div class="text-muted small">УНП</div>
+                    <div class="fw-semibold">@(Model.Supplier.Unp ?? "—")</div>
+                </div>
+                <div class="col-md-8">
+                    <div class="text-muted small">Наименование</div>
+                    <div class="fw-semibold">@Model.Supplier.Name</div>
+                </div>
+                <div class="col-12">
+                    <div class="text-muted small">Юридический адрес</div>
+                    <div>@(Model.Supplier.LegalAddress ?? "—")</div>
+                </div>
+                @if (!string.IsNullOrWhiteSpace(Model.Supplier.ContactInfo))
+                {
+                    <div class="col-12">
+                        <div class="text-muted small">Контакты</div>
+                        <div>@Model.Supplier.ContactInfo</div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+
+        <div class="col-12 col-md-4">
+            <div class="card h-100">
+                <div class="card-body text-center py-4">
+                    <div class="fs-3 fw-bold text-primary">@Model.SuppliedItemsCount</div>
+                    <div class="small text-muted">Поставленных позиций</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-md-4">
+            <div class="card h-100">
+                <div class="card-body text-center py-4">
+                    <div class="fs-3 fw-bold text-success">@Model.TotalStockQuantity.ToString("N1")</div>
+                    <div class="small text-muted">Общий остаток на складе</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-md-4">
+            <div class="card h-100">
+                <div class="card-body text-center py-4">
+                    <div class="fs-3 fw-bold text-info">@Model.RecentTransactionsCount</div>
+                    <div class="small text-muted">Операций за 30 дней</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mt-2">
+        <div class="col-12 col-lg-12">
+            <div class="card h-100">
+                <div class="card-header">Поставленные товары</div>
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead><tr><th>Наименование</th><th>Серийный №</th><th>Партия</th><th class="text-end">Остаток</th></tr></thead>
+                        <tbody>
+                            @if (!Model.SuppliedItems.Any())
+                            {
+                                <tr><td colspan="4" class="text-muted text-center py-3">Нет поставленных товаров</td></tr>
+                            }
+                            @foreach (var i in Model.SuppliedItems)
+                            {
+                                <tr>
+                                    <td>@i.NomenclatureName</td>
+                                    <td>@(i.SerialNumber ?? "—")</td>
+                                    <td>@(i.BatchNumber ?? "—")</td>
+                                    <td class="text-end">@i.Quantity.ToString("N1")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+}

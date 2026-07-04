@@ -1,0 +1,97 @@
+@{
+    ViewData["Title"] = "Мастер";
+}
+
+<div class="page-header">
+    <div class="d-flex align-items-center justify-content-between">
+        <div>
+            <h1 class="m-0">@ViewData["Title"]</h1>
+            <p class="text-muted mb-0 mt-1">Управление оборудованием и материалами</p>
+        </div>
+        <div class="d-none d-sm-block">
+            <i class="bi bi-person-badge" style="font-size: 2.5rem; opacity: 0.3;"></i>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-12">
+        <div class="row g-2">
+            <div class="col-6 col-lg-4">
+                <a asp-area="Master" asp-controller="MyStock" asp-action="Index" class="text-decoration-none">
+                    <div class="card h-100 action-card">
+                        <div class="card-body text-center">
+                            <i class="bi bi-box-seam d-block mb-2" style="font-size: 2rem;"></i>
+                            <h6 class="mb-0">Мой склад</h6>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            <div class="col-6 col-lg-4">
+                <a asp-area="Master" asp-controller="MyRequests" asp-action="Index" class="text-decoration-none">
+                    <div class="card h-100 action-card">
+                        <div class="card-body text-center">
+                            <i class="bi bi-file-earmark-text d-block mb-2" style="font-size: 2rem;"></i>
+                            <h6 class="mb-0">Мои заявки</h6>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            <div class="col-6 col-lg-4">
+                <a asp-area="Master" asp-controller="MyRequests" asp-action="Create" class="text-decoration-none">
+                    <div class="card h-100 action-card">
+                        <div class="card-body text-center">
+                            <i class="bi bi-file-earmark-plus d-block mb-2" style="font-size: 2rem;"></i>
+                            <h6 class="mb-0">Новая заявка</h6>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            <div class="col-6 col-lg-4">
+                <a asp-area="Master" asp-controller="Work" asp-action="Consume" class="text-decoration-none">
+                    <div class="card h-100 action-card">
+                        <div class="card-body text-center">
+                            <i class="bi bi-graph-down d-block mb-2" style="font-size: 2rem;"></i>
+                            <h6 class="mb-0">Расход</h6>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            <div class="col-6 col-lg-4">
+                <a asp-area="Master" asp-controller="MyWork" asp-action="Index" class="text-decoration-none">
+                    <div class="card h-100 action-card">
+                        <div class="card-body text-center">
+                            <i class="bi bi-clipboard-check d-block mb-2" style="font-size: 2rem;"></i>
+                            <h6 class="mb-0">Мои работы</h6>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            <div class="col-6 col-lg-4">
+                <a asp-area="Master" asp-controller="Profile" asp-action="Index" class="text-decoration-none">
+                    <div class="card h-100 action-card">
+                        <div class="card-body text-center">
+                            <i class="bi bi-person-circle d-block mb-2" style="font-size: 2rem;"></i>
+                            <h6 class="mb-0">Профиль / фото</h6>
+                        </div>
+                    </div>
+                </a>
+</div>
+</div>
+
+<style>
+    .action-card {
+        border: 2px solid transparent;
+        transition: all 0.3s ease;
+    }
+    .action-card:hover {
+        border-color: var(--primary-color);
+        background-color: rgba(13, 110, 253, 0.02);
+        transform: translateY(-4px);
+    }
+    .action-card i {
+        color: var(--primary-color);
+    }
+</style>
+    </div>
+</div>

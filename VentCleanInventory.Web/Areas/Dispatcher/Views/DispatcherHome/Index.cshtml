@@ -1,0 +1,88 @@
+@{
+    ViewData["Title"] = "Диспетчер";
+}
+
+<div class="page-header">
+    <div class="d-flex align-items-center justify-content-between">
+        <div>
+            <h1 class="m-0">@ViewData["Title"]</h1>
+            <p class="text-muted mb-0 mt-1">Управление складом и заявками</p>
+        </div>
+        <div class="d-none d-sm-block">
+            <i class="bi bi-diagram-3" style="font-size: 2.5rem; opacity: 0.3;"></i>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-12">
+        <div class="row g-2">
+            <div class="col-6 col-lg-4">
+                <a asp-area="Dispatcher" asp-controller="Receipts" asp-action="Create" class="text-decoration-none">
+                    <div class="card h-100 action-card">
+                        <div class="card-body text-center">
+                            <i class="bi bi-box-arrow-in-down d-block mb-2" style="font-size: 2rem;"></i>
+                            <h6 class="mb-0">Приёмка</h6>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            <div class="col-6 col-lg-4">
+                <a asp-area="Dispatcher" asp-controller="Requests" asp-action="Index" class="text-decoration-none">
+                    <div class="card h-100 action-card">
+                        <div class="card-body text-center">
+                            <i class="bi bi-file-earmark-text d-block mb-2" style="font-size: 2rem;"></i>
+                            <h6 class="mb-0">Заявки</h6>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            <div class="col-6 col-lg-4">
+                <a asp-area="Dispatcher" asp-controller="Returns" asp-action="Index" class="text-decoration-none">
+                    <div class="card h-100 action-card">
+                        <div class="card-body text-center">
+                            <i class="bi bi-arrow-return-left d-block mb-2" style="font-size: 2rem;"></i>
+                            <h6 class="mb-0">Возврат</h6>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+            <div class="col-6 col-lg-4">
+                <a asp-area="Dispatcher" asp-controller="WriteOffActs" asp-action="Index" class="text-decoration-none">
+                    <div class="card h-100 action-card">
+                        <div class="card-body text-center">
+                            <i class="bi bi-file-earmark-minus d-block mb-2" style="font-size: 2rem;"></i>
+                            <h6 class="mb-0">Акты списания</h6>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            <div class="col-6 col-lg-4">
+                <a asp-area="Dispatcher" asp-controller="Balances" asp-action="Index" class="text-decoration-none">
+                    <div class="card h-100 action-card">
+                        <div class="card-body text-center">
+                            <i class="bi bi-graph-up d-block mb-2" style="font-size: 2rem;"></i>
+                            <h6 class="mb-0">Остатки</h6>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .action-card {
+        border: 2px solid transparent;
+        transition: all 0.3s ease;
+    }
+    .action-card:hover {
+        border-color: var(--primary-color);
+        background-color: rgba(13, 110, 253, 0.02);
+        transform: translateY(-4px);
+    }
+    .action-card i {
+        color: var(--primary-color);
+    }
+</style>

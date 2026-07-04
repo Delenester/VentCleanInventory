@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] — VentClean</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.0/font/bootstrap-icons.min.css" />
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body>
+    @using Microsoft.EntityFrameworkCore
+@using VentCleanInventory.Web.Data
+@inject ApplicationDbContext Db
+@{
+    var notificationCount = 0;
+    if (User.Identity?.IsAuthenticated == true && (User.IsInRole("Руководитель") || User.IsInRole("Клиент")))
+    {
+        var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (userId != null)
+            notificationCount = Db.Notifications.Count(n => n.UserId == userId && !n.IsRead);
+    }
+
+    var roleName = "";
+    var area = ViewContext.RouteData.Values["area"]?.ToString() ?? "";
+    var ctrl = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
+    var act = ViewContext.RouteData.Values["action"]?.ToString() ?? "";
+    if (User.IsInRole("Администратор")) roleName = "Администратор";
+    else if (User.IsInRole("Диспетчер")) roleName = "Диспетчер";
+    else if (User.IsInRole("Мастер")) roleName = "Мастер";
+    else if (User.IsInRole("Руководитель")) roleName = "Руководитель";
+    else if (User.IsInRole("Клиент")) roleName = "Клиент";
+    else if (User.IsInRole("Поставщик")) roleName = "Поставщик";
+}
+
+    <button class="mobile-toggle" id="menuToggle" onclick="toggleMenu()">
+        <i class="bi bi-list"></i>
+    </button>
+    <div class="sidebar-overlay" id="menuOverlay" onclick="closeMenu()"></div>
+
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-logo-icon">VC</div>
+            <div class="sidebar-logo">Vent<span>Clean</span></div>
+        </div>
+        <div class="sidebar-menu">
+            @if (User.IsInRole("Администратор"))
+            {
+                <div class="menu-heading">Администрирование</div>
+                <a class="nav-item@(area=="Admin"&&ctrl=="AdminHome"?" active":"")" asp-area="Admin" asp-controller="AdminHome" asp-action="Index"><i class="bi bi-speedometer2"></i>Главная</a>
+                <a class="nav-item@(ctrl=="Nomenclature"?" active":"")" asp-area="Admin" asp-controller="Nomenclature" asp-action="Index"><i class="bi bi-card-list"></i>Номенклатура</a>
+                <a class="nav-item@(ctrl=="Suppliers"?" active":"")" asp-area="Admin" asp-controller="Suppliers" asp-action="Index"><i class="bi bi-truck"></i>Поставщики</a>
+                <a class="nav-item@(ctrl=="Clients"?" active":"")" asp-area="Admin" asp-controller="Clients" asp-action="Index"><i class="bi bi-building"></i>Клиенты</a>
+                <a class="nav-item@(ctrl=="Objects"?" active":"")" asp-area="Admin" asp-controller="Objects" asp-action="Index"><i class="bi bi-geo-alt"></i>Объекты</a>
+                <a class="nav-item@(ctrl=="Warehouses"?" active":"")" asp-area="Admin" asp-controller="Warehouses" asp-action="Index"><i class="bi bi-archive"></i>Склады</a>
+                <div class="menu-heading">Система</div>
+                <a class="nav-item@(ctrl=="Users"?" active":"")" asp-area="Admin" asp-controller="Users" asp-action="Index"><i class="bi bi-people"></i>Пользователи</a>
+                <a class="nav-item@(ctrl=="Backup"?" active":"")" asp-area="Admin" asp-controller="Backup" asp-action="Index"><i class="bi bi-cloud-arrow-down"></i>Бэкап</a>
+            }
+            @if (User.IsInRole("Диспетчер"))
+            {
+                <div class="menu-heading">Склад</div>
+                <a class="nav-item@(area=="Dispatcher"&&ctrl=="DispatcherHome"?" active":"")" asp-area="Dispatcher" asp-controller="DispatcherHome" asp-action="Index"><i class="bi bi-speedometer2"></i>Главная</a>
+                <a class="nav-item@(ctrl=="Receipts"?" active":"")" asp-area="Dispatcher" asp-controller="Receipts" asp-action="Create"><i class="bi bi-box-arrow-in-down"></i>Приёмка</a>
+                <a class="nav-item@(ctrl=="Requests"?" active":"")" asp-area="Dispatcher" asp-controller="Requests" asp-action="Index"><i class="bi bi-clipboard-check"></i>Заявки</a>
+                <a class="nav-item@(ctrl=="Returns"?" active":"")" asp-area="Dispatcher" asp-controller="Returns" asp-action="Index"><i class="bi bi-arrow-counterclockwise"></i>Возвраты</a>
+                <a class="nav-item@(ctrl=="WriteOffActs"?" active":"")" asp-area="Dispatcher" asp-controller="WriteOffActs" asp-action="Index"><i class="bi bi-file-earmark-minus"></i>Списание</a>
+                <a class="nav-item@(ctrl=="Balances"?" active":"")" asp-area="Dispatcher" asp-controller="Balances" asp-action="Index"><i class="bi bi-bar-chart"></i>Остатки</a>
+                <a class="nav-item@(ctrl=="WorkLogs"?" active":"")" asp-area="Dispatcher" asp-controller="WorkLogs" asp-action="Index"><i class="bi bi-clipboard-check"></i>Выполненные работы</a>
+            }
+            @if (User.IsInRole("Мастер"))
+            {
+                <div class="menu-heading">Работа</div>
+                <a class="nav-item@(area=="Master"&&ctrl=="MasterHome"?" active":"")" asp-area="Master" asp-controller="MasterHome" asp-action="Index"><i class="bi bi-speedometer2"></i>Главная</a>
+                <a class="nav-item@(ctrl=="MyStock"?" active":"")" asp-area="Master" asp-controller="MyStock" asp-action="Index"><i class="bi bi-box"></i>Мой склад</a>
+                <a class="nav-item@(ctrl=="MyRequests"&&ViewContext.RouteData.Values["Action"]?.ToString()=="Index"?" active":"")" asp-area="Master" asp-controller="MyRequests" asp-action="Index"><i class="bi bi-file-earmark-text"></i>Мои заявки</a>
+                <a class="nav-item@(ctrl=="MyRequests"&&ViewContext.RouteData.Values["Action"]?.ToString()=="Create"?" active":"")" asp-area="Master" asp-controller="MyRequests" asp-action="Create"><i class="bi bi-plus-circle"></i>Заявка</a>
+                @* Расход встроен в «Мои работы» *@
+                <a class="nav-item@(ctrl=="MyWork"?" active":"")" asp-area="Master" asp-controller="MyWork" asp-action="Index"><i class="bi bi-clipboard-check"></i>Мои работы</a>
+                <a class="nav-item@(ctrl=="Defects"?" active":"")" asp-area="Master" asp-controller="Defects" asp-action="Index"><i class="bi bi-exclamation-triangle"></i>Брак</a>
+                <a class="nav-item@(ctrl=="Profile"?" active":"")" asp-area="Master" asp-controller="Profile" asp-action="Index"><i class="bi bi-person"></i>Профиль</a>
+            }
+            @if (User.IsInRole("Руководитель"))
+            {
+                <div class="menu-heading">Аналитика</div>
+                <a class="nav-item@(area=="Manager"&&ctrl=="ManagerHome"?" active":"")" asp-area="Manager" asp-controller="ManagerHome" asp-action="Index">
+                    <i class="bi bi-speedometer2"></i>Главная
+                    @if (notificationCount > 0)
+                    {
+                        <span class="badge bg-danger ms-auto">@notificationCount</span>
+                    }
+                </a>
+                <a class="nav-item@(ctrl=="Reports"&&ViewContext.RouteData.Values["Action"]?.ToString()=="CostsByObjects"?" active":"")" asp-area="Manager" asp-controller="Reports" asp-action="CostsByObjects"><i class="bi bi-cash-stack"></i>Затраты</a>
+                <a class="nav-item@(ctrl=="Reports"&&ViewContext.RouteData.Values["Action"]?.ToString()=="EquipmentUtilization"?" active":"")" asp-area="Manager" asp-controller="Reports" asp-action="EquipmentUtilization"><i class="bi bi-gear"></i>Оборудование</a>
+                <a class="nav-item@(ctrl=="Reports"&&ViewContext.RouteData.Values["Action"]?.ToString()=="ForecastPurchases"?" active":"")" asp-area="Manager" asp-controller="Reports" asp-action="ForecastPurchases"><i class="bi bi-cart"></i>Закупки</a>
+                <a class="nav-item@(ctrl=="Reports"&&ViewContext.RouteData.Values["Action"]?.ToString()=="CostsTrend"?" active":"")" asp-area="Manager" asp-controller="Reports" asp-action="CostsTrend"><i class="bi bi-graph-up"></i>Динамика</a>
+                <div class="menu-heading">Работа</div>
+                <a class="nav-item@(ctrl=="WorkReport"?" active":"")" asp-area="Manager" asp-controller="WorkReport" asp-action="Index"><i class="bi bi-clipboard-check"></i>Выполненные работы</a>
+                <div class="menu-heading">Управление</div>
+                <a class="nav-item@(ctrl=="Clients"?" active":"")" asp-area="Manager" asp-controller="Clients" asp-action="Index"><i class="bi bi-people"></i>Клиенты</a>
+                <a class="nav-item@(ctrl=="Request"?" active":"")" asp-area="Manager" asp-controller="Request" asp-action="Index"><i class="bi bi-clipboard-check"></i>Заявки</a>
+            }
+            @if (User.IsInRole("Клиент"))
+            {
+                <div class="menu-heading">Портал</div>
+                <a class="nav-item@(area=="Client"&&ctrl=="ClientHome"?" active":"")" asp-area="Client" asp-controller="ClientHome" asp-action="Index">
+                    <i class="bi bi-speedometer2"></i>Главная
+                    @if (notificationCount > 0)
+                    {
+                        <span class="badge bg-danger ms-auto">@notificationCount</span>
+                    }
+                </a>
+                <a class="nav-item@(ctrl=="ClientRequest"&& act=="Create"?" active":"")" asp-area="Client" asp-controller="ClientRequest" asp-action="Create"><i class="bi bi-send"></i>Оставить заявку</a>
+                <a class="nav-item@(ctrl=="ClientRequest"&& act=="Index"?" active":"")" asp-area="Client" asp-controller="ClientRequest" asp-action="Index"><i class="bi bi-list-ul"></i>Все заявки</a>
+                <a class="nav-item@(ctrl=="WorkReport"?" active":"")" asp-area="Client" asp-controller="WorkReport" asp-action="Index"><i class="bi bi-clipboard-check"></i>Выполненные работы</a>
+            }
+            @if (User.IsInRole("Поставщик"))
+            {
+                <div class="menu-heading">Портал</div>
+                <a class="nav-item@(area=="Supplier"&&ctrl=="SupplierHome"?" active":"")" asp-area="Supplier" asp-controller="SupplierHome" asp-action="Index"><i class="bi bi-speedometer2"></i>Главная</a>
+                <a class="nav-item@(ctrl=="Supplies"?" active":"")" asp-area="Supplier" asp-controller="Supplies" asp-action="Index"><i class="bi bi-truck"></i>Мои поставки</a>
+            }
+        </div>
+        @if (User.Identity?.IsAuthenticated == true)
+        {
+            <div class="sidebar-footer">
+                <form asp-area="" asp-controller="Account" asp-action="Logout" method="post" onsubmit="return handleLogout(event)">
+                    @Html.AntiForgeryToken()
+                    <div class="sidebar-user">
+                        <div class="user-avatar">@(User.Identity.Name?.Substring(0, 1).ToUpper() ?? "?")</div>
+                        <div style="flex:1;min-width:0">
+                            <div class="user-name text-truncate">@User.Identity.Name</div>
+                            <div class="user-role">@roleName</div>
+                        </div>
+                        <button type="submit" class="logout-btn" title="Выйти"><i class="bi bi-box-arrow-right"></i></button>
+                    </div>
+                </form>
+            </div>
+        }
+        else
+        {
+            <div class="sidebar-footer">
+                <a asp-area="" asp-controller="Account" asp-action="Login" class="btn btn-sm btn-primary w-100"><i class="bi bi-box-arrow-in-right"></i>Войти</a>
+            </div>
+        }
+    </aside>
+
+    <main class="main-content">
+        @if (User.Identity?.IsAuthenticated == true)
+        {
+            <div class="page-title">@ViewData["Title"]</div>
+        }
+        @RenderBody()
+    </main>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+
+    <script>
+    function toggleMenu() {
+        document.getElementById('sidebar').classList.toggle('open');
+        document.getElementById('menuOverlay').classList.toggle('show');
+    }
+    function closeMenu() {
+        document.getElementById('sidebar').classList.remove('open');
+        document.getElementById('menuOverlay').classList.remove('show');
+    }
+    function handleLogout(e) {
+        e.preventDefault();
+        var form = e.target;
+        form.querySelector('button').disabled = true;
+        fetch(form.action, { method:'POST', body: new FormData(form) })
+            .then(function(){ window.location.href='/Account/Login'; })
+            .catch(function(){ form.querySelector('button').disabled = false; });
+        return false;
+    }
+    </script>
+</body>
+</html>

@@ -1,0 +1,80 @@
+@{
+    ViewData["Title"] = "Зафиксировать брак";
+    var workObjects = ViewBag.WorkObjects as List<VentCleanInventory.Web.Data.Entities.WorkObject> ?? new();
+}
+
+<div class="page-header">
+    <div class="d-flex align-items-center gap-2">
+        <a asp-action="Index" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i>
+        </a>
+        <h1 class="m-0">@ViewData["Title"]</h1>
+    </div>
+</div>
+
+@if (TempData["Error"] is string error)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        @error
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data">
+                    @Html.AntiForgeryToken()
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Объект <span class="text-danger">*</span></label>
+                        <select name="workObjectId" class="form-select form-select-lg" required>
+                            <option value="">— Выберите объект —</option>
+                            @foreach (var o in workObjects)
+                            {
+                                <option value="@o.Id">@o.Name — @o.Address</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Зона / площадка</label>
+                        <input name="zoneName" class="form-control" placeholder="Например: 2 этаж, серверная" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Описание брака <span class="text-danger">*</span></label>
+                        <textarea name="description" class="form-control" rows="5" required
+                                  placeholder="Опишите что сломалось, как выглядит дефект, возможные причины"></textarea>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">Фото</label>
+                        <input type="file" name="photo" accept=".jpg,.jpeg,.png" class="form-control" />
+                        <div class="form-text">JPG или PNG, необязательно</div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-lg w-100">
+                        <i class="bi bi-save me-1"></i> Сохранить
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card border-warning">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-exclamation-triangle me-1"></i> Что фиксировать</h5>
+                <ul class="mb-0 small">
+                    <li>Повреждённые элементы вентиляции</li>
+                    <li>Изношенные детали</li>
+                    <li>Неработающее оборудование</li>
+                    <li>Дефекты монтажа</li>
+                    <li>Посторонние загрязнения</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>

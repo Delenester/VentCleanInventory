@@ -1,0 +1,182 @@
+@model VentCleanInventory.Web.Areas.Client.Models.RequestDetailsViewModel
+@using VentCleanInventory.Web.Data
+
+@{
+    ViewData["Title"] = $"Заявка №{Model.Request.Id}";
+    var r = Model.Request;
+}
+
+<div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <h1 class="m-0">@ViewData["Title"]</h1>
+    <a asp-action="Index" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left"></i> Все заявки
+    </a>
+</div>
+
+<div class="row g-4">
+    @* Info card *@
+    <div class="col-lg-7">
+        <div class="card h-100">
+            <div class="card-header">Информация о заявке</div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-5">Объект</dt>
+                    <dd class="col-sm-7">@(r.WorkObject?.Name ?? "—")</dd>
+
+                    <dt class="col-sm-5">Адрес</dt>
+                    <dd class="col-sm-7">@(r.WorkObject?.Address ?? "—")</dd>
+
+                    <dt class="col-sm-5">Тип услуги</dt>
+                    <dd class="col-sm-7">@Model.ServiceType</dd>
+
+                    <dt class="col-sm-5">Площадь</dt>
+                    <dd class="col-sm-7">@(r.Area?.ToString("N2") ?? "—") м²</dd>
+
+                    <dt class="col-sm-5">Стоимость</dt>
+                    <dd class="col-sm-7 fw-bold">@(r.EstimatedCost?.ToString("N2") ?? "—") руб.</dd>
+
+                    <dt class="col-sm-5">Дата подачи</dt>
+                    <dd class="col-sm-7">@r.Date.ToString("dd.MM.yyyy HH:mm")</dd>
+
+                    <dt class="col-sm-5">Договор</dt>
+                    <dd class="col-sm-7">
+                        @(r.ContractNumber ?? "—")
+                        @if (!string.IsNullOrWhiteSpace(r.ContractNumber))
+                        {
+                            <a asp-area="Manager" asp-controller="Contract" asp-action="Export" asp-route-id="@r.Id" class="btn btn-sm btn-outline-primary ms-2">
+                                <i class="bi bi-download"></i>
+                            </a>
+                        }
+                    </dd>
+
+                    <dt class="col-sm-5">Мастер</dt>
+                    <dd class="col-sm-7">@(Model.MasterName == "" ? "—" : Model.MasterName)</dd>
+
+                    @if (!string.IsNullOrWhiteSpace(r.ManagerNote))
+                    {
+                        <dt class="col-sm-5">Примечание менеджера</dt>
+                        <dd class="col-sm-7">@r.ManagerNote</dd>
+                    }
+
+                    <dt class="col-sm-5">Статус</dt>
+                    <dd class="col-sm-7">
+                        @switch (r.RequestStatusValue)
+                        {
+                            case RequestStatus.New:
+                                <span class="badge bg-warning text-dark">Новая</span>
+                                break;
+                            case RequestStatus.Approved:
+                                <span class="badge bg-success">Одобрена</span>
+                                break;
+                            case RequestStatus.ClientConfirmed:
+                                <span class="badge bg-info text-dark">Подтверждена</span>
+                                break;
+                            case RequestStatus.Assigned:
+                                <span class="badge bg-primary">Назначена</span>
+                                break;
+                            case RequestStatus.InProgress:
+                                <span class="badge bg-secondary">В работе</span>
+                                break;
+                            case RequestStatus.Completed:
+                                <span class="badge bg-success">Выполнена</span>
+                                break;
+                            case RequestStatus.Rejected:
+                                <span class="badge bg-danger">Отклонена</span>
+                                break;
+                        }
+                    </dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+
+    @* Timeline *@
+    <div class="col-lg-5">
+        <div class="card h-100">
+            <div class="card-header">Ход выполнения</div>
+            <div class="card-body">
+                <ul class="list-unstyled mb-0">
+                    @{
+                        var steps = new[]
+                        {
+                            (RequestStatus.New, "Заявка создана", r.Date),
+                            (RequestStatus.Approved, "Одобрена менеджером", r.PlannedStartDate ?? r.Date),
+                            (RequestStatus.ClientConfirmed, "Договор подтверждён", r.PlannedStartDate),
+                            (RequestStatus.Assigned, "Назначен мастер", r.PlannedStartDate),
+                            (RequestStatus.InProgress, "Работа начата", r.PlannedStartDate),
+                            (RequestStatus.Completed, "Работа завершена", r.PlannedEndDate),
+                        };
+                        var currentStatus = r.RequestStatusValue ?? RequestStatus.New;
+                        var currentStep = Array.FindIndex(steps, s => s.Item1 == currentStatus);
+                        if (currentStep < 0) currentStep = steps.Length - 1;
+                    }
+                    @for (int i = 0; i < steps.Length; i++)
+                    {
+                        var isDone = i <= currentStep;
+                        var isCurrent = i == currentStep;
+                        <li class="d-flex align-items-start mb-3 @(isDone ? "" : "opacity-50")">
+                            <div class="me-3 mt-1">
+                                @if (isDone)
+                                {
+                                    <span class="badge bg-@(isCurrent ? "primary" : "success") rounded-circle p-2" style="width:28px;height:28px;">
+                                        @(isCurrent ? "●" : "✓")
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-light text-muted rounded-circle p-2" style="width:28px;height:28px;">○</span>
+                                }
+                            </div>
+                            <div>
+                                <div class="fw-semibold small">@steps[i].Item2</div>
+                                <div class="text-muted small">
+                                    @if (steps[i].Item3 is not null)
+                                    {
+                                        @steps[i].Item3?.ToString("dd.MM.yyyy")
+                                    }
+                                    else if (isDone && i > 0)
+                                    {
+                                        <em>выполнено</em>
+                                    }
+                                </div>
+                            </div>
+                        </li>
+                    }
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* Blueprint / Description *@
+@if (!string.IsNullOrWhiteSpace(Model.Description) || !string.IsNullOrWhiteSpace(r.BlueprintPhotoPath))
+{
+    <div class="card mt-4">
+        <div class="card-header">Описание и чертёж</div>
+        <div class="card-body">
+            @if (!string.IsNullOrWhiteSpace(Model.Description))
+            {
+                <p class="mb-3">@Model.Description</p>
+            }
+            @if (!string.IsNullOrWhiteSpace(r.BlueprintPhotoPath))
+            {
+                <a href="@r.BlueprintPhotoPath" target="_blank">
+                    <img src="@r.BlueprintPhotoPath" class="img-fluid img-thumbnail" style="max-height:300px;" alt="Чертёж" />
+                </a>
+            }
+        </div>
+    </div>
+}
+
+@* Actions *@
+<div class="d-flex gap-2 mt-4">
+    <a asp-action="Index" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i> Назад
+    </a>
+    @if (!string.IsNullOrWhiteSpace(r.ContractNumber))
+    {
+        <a asp-area="Manager" asp-controller="Contract" asp-action="Export" asp-route-id="@r.Id" class="btn btn-primary">
+            <i class="bi bi-download"></i> Скачать договор
+        </a>
+    }
+</div>
