@@ -39,18 +39,29 @@ public static class DbSeeder
         var client2 = new Organization { Type = OrganizationType.Client, Unp = "987654321", Name = "АО «ТеплоСтрой»", LegalAddress = "г. Минск, ул. Немига, 12", ContactInfo = "тел. +375297654321" };
         var supplier1 = new Organization { Type = OrganizationType.Supplier, Name = "ООО «ТехноВент»", Unp = "456123789", LegalAddress = "г. Минск, ул. Машиностроителей, 8", ContactInfo = "тел. +375331234567" };
         var supplier2 = new Organization { Type = OrganizationType.Supplier, Name = "ИП «ФильтрСервис»", Unp = "789321654", LegalAddress = "г. Минск, ул. Советская, 25", ContactInfo = "тел. +375291112233" };
-        db.Organizations.AddRange(client1, client2, supplier1, supplier2);
+        var client3 = new Organization { Type = OrganizationType.Client, Unp = "192837465", Name = "ООО «Савушкин»", LegalAddress = "г. Брест, ул. Янки Купалы, 5", ContactInfo = "тел. +375162123456" };
+        var client4 = new Organization { Type = OrganizationType.Client, Unp = "564738291", Name = "СОАО «Комунарка»", LegalAddress = "г. Минск, ул. Октябрьская, 4", ContactInfo = "тел. +375172345678" };
+        db.Organizations.AddRange(client1, client2, client3, client4, supplier1, supplier2);
         await db.SaveChangesAsync();
 
         // ── External users ──
-        await SeedUserAsync(userManager, "client", "Client2026", "Пётр Иванович", AppUserRole.Client, organizationId: client1.Id);
+        await SeedUserAsync(userManager, "client", "Client2026", "Пётр Иванович", AppUserRole.Client, organizationId: client1.Id,
+            phone: "+375291234567", bankAccount: "BY12NBRB36009000000000000000", bankName: "«Белгазпромбанк» ОАО", bik: "NBRBBY2X");
+        await SeedUserAsync(userManager, "client2", "Client22026", "Сергей Кузнецов", AppUserRole.Client, organizationId: client2.Id,
+            phone: "+375297654321", bankAccount: "BY13ALFA36009000000000000000", bankName: "ЗАО «Альфа-Банк»", bik: "ALFABY2X");
+        await SeedUserAsync(userManager, "client3", "Client32026", "Андрей Савушкин", AppUserRole.Client, organizationId: client3.Id,
+            phone: "+375162123456", bankAccount: "BY14PJCB36009000000000000000", bankName: "ОАО «Приорбанк»", bik: "PJCBBY2X");
+        await SeedUserAsync(userManager, "client4", "Client42026", "Елена Кондратьева", AppUserRole.Client, organizationId: client4.Id,
+            phone: "+375172345678", bankAccount: "BY15BELB36009000000000000000", bankName: "ОАО «Белагропромбанк»", bik: "BELBBY2X");
         await SeedUserAsync(userManager, "supplier", "Supplier2026", "Сергей Петров", AppUserRole.Supplier, organizationId: supplier1.Id);
 
         // ── WorkObjects ──
         var wo1 = new WorkObject { Name = "Административное здание, ул. Ленина, 15", Address = "г. Минск, ул. Ленина, 15", VentSystemType = "Приточно-вытяжная", AccessDifficulty = "Средняя", Distance = "5 км" };
         var wo2 = new WorkObject { Name = "Производственный цех №3", Address = "г. Минск, ул. Заводская, 1", VentSystemType = "Промышленная вытяжка", AccessDifficulty = "Высокая (высота 8 м)", Distance = "12 км" };
         var wo3 = new WorkObject { Name = "Торговый центр «Гранд»", Address = "г. Минск, ул. Победителей, 100", VentSystemType = "Центральное кондиционирование", AccessDifficulty = "Низкая", Distance = "3 км" };
-        db.WorkObjects.AddRange(wo1, wo2, wo3);
+        var wo4 = new WorkObject { Name = "Молочный комбинат «Савушкин»", Address = "г. Брест, ул. Янки Купалы, 5", VentSystemType = "Промышленная вытяжка", AccessDifficulty = "Средняя", Distance = "350 км" };
+        var wo5 = new WorkObject { Name = "Фабрика «Комунарка» — кондитерский цех", Address = "г. Минск, ул. Октябрьская, 4", VentSystemType = "Приточно-вытяжная", AccessDifficulty = "Низкая", Distance = "2 км" };
+        db.WorkObjects.AddRange(wo1, wo2, wo3, wo4, wo5);
         await db.SaveChangesAsync();
 
         // ── Nomenclature ──
@@ -116,6 +127,8 @@ public static class DbSeeder
 
         // ── Requests (as StockTransaction with RequestStatusValue) ──
         var requestStatuses = new[] { RequestStatus.New, RequestStatus.Approved, RequestStatus.Completed };
+        var serviceTypes = new[] { "Чистка вентиляции", "Дезинфекция воздуховодов", "Замена фильтров", "Ремонт вентоборудования", "Монтаж воздуховодов" };
+        var descriptions = new[] { "Плановое обслуживание системы вентиляции", "Обработка плесени в приточной камере", "Профилактическая замена фильтрующих элементов", "Восстановление работоспособности вытяжного вентилятора", "Прокладка дополнительных воздуховодов в цех" };
         for (int i = 1; i <= 6; i++)
         {
             var isEven = i % 2 == 0;
@@ -126,17 +139,21 @@ public static class DbSeeder
                 if (!reqItems.Any(ri => ri.NomenclatureId == nom.Id))
                     reqItems.Add(new TransactionItemDto { NomenclatureId = nom.Id, NomenclatureName = nom.Name, Quantity = rnd.Next(1, 20) });
             }
+            var si = rnd.Next(5);
+            var area = 50 + rnd.NextDouble() * 450;
+            var cost = (decimal)(area * (8 + rnd.NextDouble() * 7));
             var st = new StockTransaction
             {
                 TransactionType = TransactionType.Issue,
                 UserId = master.Id,
-                WorkObjectId = new[] { wo1.Id, wo2.Id, wo3.Id }[rnd.Next(3)],
-                ClientId = isEven ? client1.Id : client2.Id,
+                WorkObjectId = new[] { wo1.Id, wo2.Id, wo3.Id, wo4.Id, wo5.Id }[rnd.Next(5)],
+                ClientId = new[] { client1.Id, client2.Id, client3.Id, client4.Id }[rnd.Next(4)],
                 SupplierId = isEven ? supplier1.Id : supplier2.Id,
                 Date = DateTime.Today.AddDays(-rnd.Next(1, 60)),
                 RequestStatusValue = requestStatuses[rnd.Next(3)],
-                Note = $"Заявка #{i}",
-                EstimatedCost = isEven ? (decimal)(100 + rnd.NextDouble() * 400) : null,
+                Note = $"[{serviceTypes[si]}] {descriptions[si]}",
+                Area = (decimal)Math.Round(area, 1),
+                EstimatedCost = Math.Round(cost, 2),
                 ContractNumber = isEven ? $"Д-{DateTime.Now:yyyyMMdd}-{100 + i}" : null,
                 AssignedMasterId = isEven ? master.Id : null,
             };
@@ -148,7 +165,7 @@ public static class DbSeeder
         // ── WorkLogs ──
         var workLogs = new List<WorkLog>();
         var zoneNames = new[] { "Цокольный этаж", "1 этаж — холл", "Кровля — венткамеры", "Цех — основная зона", "Торговый зал" };
-        var objIds = new[] { wo1.Id, wo1.Id, wo1.Id, wo2.Id, wo3.Id };
+        var objIds = new[] { wo1.Id, wo2.Id, wo3.Id, wo4.Id, wo5.Id };
         for (int i = 0; i < 5; i++)
         {
             var wl = new WorkLog
@@ -212,7 +229,8 @@ public static class DbSeeder
     static async Task<ApplicationUser> SeedUserAsync(
         UserManager<ApplicationUser> userManager,
         string login, string password, string fullName, string role,
-        int? organizationId = null, string? email = null)
+        int? organizationId = null, string? email = null,
+        string? phone = null, string? bankAccount = null, string? bankName = null, string? bik = null)
     {
         var user = await userManager.FindByNameAsync(login);
         if (user is null)
@@ -238,6 +256,11 @@ public static class DbSeeder
         user.OrganizationId = organizationId ?? user.OrganizationId;
         user.AccessFailedCount = 0;
         user.LockoutEnd = null;
+        user.PhoneNumber = phone ?? user.PhoneNumber;
+        user.PhoneContact = phone ?? user.PhoneContact;
+        user.BankAccount = bankAccount ?? user.BankAccount;
+        user.BankName = bankName ?? user.BankName;
+        user.BIK = bik ?? user.BIK;
         await userManager.UpdateAsync(user);
 
         if (!await userManager.IsInRoleAsync(user, role))

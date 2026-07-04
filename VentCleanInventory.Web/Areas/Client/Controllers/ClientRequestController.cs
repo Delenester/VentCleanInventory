@@ -55,6 +55,8 @@ public class ClientRequestController(
             blueprintPath = $"/uploads/blueprints/{fileName}";
         }
 
+        var estimatedCost = (model.Area ?? 0) * ServicePriceList.GetPrice(model.ServiceType);
+
         var req = new StockTransaction
         {
             TransactionType = TransactionType.Issue,
@@ -65,7 +67,7 @@ public class ClientRequestController(
             RequestStatusValue = RequestStatus.New,
             Note = $"[{model.ServiceType}] {model.Description}",
             Area = model.Area,
-            EstimatedCost = model.EstimatedCost,
+            EstimatedCost = Math.Round(estimatedCost, 2),
             BlueprintPhotoPath = blueprintPath,
         };
         req.SetItems(new List<TransactionItemDto>());

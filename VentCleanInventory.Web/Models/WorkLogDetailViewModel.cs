@@ -20,6 +20,10 @@ public class WorkLogDetailViewModel
     public string? RelatedRequestStatus { get; set; }
     public string? ContractNumber { get; set; }
     public List<DefectItem> Defects { get; set; } = [];
+    public bool CanLeaveFeedback { get; set; }
+    public int? Rating { get; set; }
+    public string? FeedbackComment { get; set; }
+    public DateTime? FeedbackDate { get; set; }
 }
 
 public class ChecklistItem

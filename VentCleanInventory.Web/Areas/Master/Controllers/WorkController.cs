@@ -107,6 +107,20 @@ public class WorkController(ApplicationDbContext db, StockService stockService, 
         tx.WriteOffReason = WriteOffReason.Wear;
         await db.SaveChangesAsync();
 
+        // auto-set InProgress on the related request
+        var pendingRequest = await db.StockTransactions
+            .Where(r => r.AssignedMasterId == userId
+                        && r.WorkObjectId == model.WorkObjectId
+                        && r.RequestStatusValue == RequestStatus.Assigned)
+            .OrderByDescending(r => r.Date)
+            .FirstOrDefaultAsync();
+        if (pendingRequest != null)
+        {
+            pendingRequest.RequestStatusValue = RequestStatus.InProgress;
+            pendingRequest.WorkLogId = workLog.Id;
+            await db.SaveChangesAsync();
+        }
+
         // save work photo
         if (model.DefectPhoto is { Length: > 0 })
         {

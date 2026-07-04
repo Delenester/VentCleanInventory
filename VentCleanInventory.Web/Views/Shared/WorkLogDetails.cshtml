@@ -182,6 +182,10 @@
                            class="btn btn-outline-primary btn-sm w-100">
                             <i class="bi bi-download"></i> Договор @Model.ContractNumber
                         </a>
+                        <a asp-area="Manager" asp-controller="Contract" asp-action="ExportAct" asp-route-requestId="@Model.RelatedRequestId"
+                           class="btn btn-outline-success btn-sm w-100 mt-1">
+                            <i class="bi bi-file-earmark-text"></i> Акт выполненных работ
+                        </a>
                     }
                 </div>
             </div>
@@ -216,3 +220,85 @@
         }
     </div>
 </div>
+
+@* Feedback section (client only) *@
+@if (Model.Rating.HasValue || Model.CanLeaveFeedback)
+{
+    <div class="card mt-4">
+        <div class="card-header"><i class="bi bi-star me-1"></i>Отзыв клиента</div>
+        <div class="card-body">
+            @if (Model.Rating.HasValue)
+            {
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    <span class="fw-semibold">Оценка:</span>
+                    <span class="text-warning fs-5">
+                        @for (var i = 1; i <= 5; i++)
+                        {
+                            if (i <= Model.Rating.Value)
+                            {
+                                <i class="bi bi-star-fill"></i>
+                            }
+                            else
+                            {
+                                <i class="bi bi-star"></i>
+                            }
+                        }
+                    </span>
+                    <span class="text-muted small">@Model.Rating / 5</span>
+                </div>
+                @if (!string.IsNullOrWhiteSpace(Model.FeedbackComment))
+                {
+                    <div class="text-muted">@Model.FeedbackComment</div>
+                }
+                @if (Model.FeedbackDate.HasValue)
+                {
+                    <div class="text-muted small mt-1">@Model.FeedbackDate.Value.ToString("dd.MM.yyyy HH:mm")</div>
+                }
+            }
+            @if (Model.CanLeaveFeedback)
+            {
+                <form asp-area="Client" asp-controller="WorkReport" asp-action="LeaveFeedback" method="post" class="mt-2">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="workLogId" value="@Model.Id" />
+                    <div class="mb-3">
+                        <label class="form-label required">Оценка</label>
+                        <div class="rating-input d-flex gap-2 fs-3">
+                            @for (var i = 1; i <= 5; i++)
+                            {
+                                <label class="cursor-pointer">
+                                    <input type="radio" name="rating" value="@i" class="d-none" required />
+                                    <i class="bi bi-star text-warning" data-star="@i"></i>
+                                </label>
+                            }
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Комментарий (необязательно)</label>
+                        <textarea name="comment" class="form-control" rows="3" maxlength="2000" placeholder="Поделитесь впечатлениями о выполненной работе..."></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-send me-1"></i>Отправить отзыв
+                    </button>
+                </form>
+            }
+        </div>
+    </div>
+}
+
+@section Scripts {
+    <script>
+        document.querySelectorAll('.rating-input label').forEach(function(label) {
+            label.addEventListener('click', function() {
+                var allLabels = this.closest('.rating-input').querySelectorAll('label i');
+                allLabels.forEach(function(icon) {
+                    icon.className = 'bi bi-star text-warning';
+                });
+                var stars = this.closest('.rating-input').querySelectorAll('label');
+                var idx = Array.from(stars).indexOf(this);
+                for (var i = 0; i <= idx; i++) {
+                    stars[i].querySelector('i').className = 'bi bi-star-fill text-warning';
+                }
+            });
+        });
+    </script>
+}

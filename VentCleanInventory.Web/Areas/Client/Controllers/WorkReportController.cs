@@ -87,6 +87,10 @@ public class WorkReportController(
             .Where(d => d.WorkObjectId == log.WorkObjectId && d.MasterUserId == log.MasterUserId)
             .ToListAsync();
 
+        var feedback = await db.Feedbacks.AsNoTracking()
+            .Where(f => f.WorkLogId == id && f.ClientUserId == user.Id)
+            .FirstOrDefaultAsync();
+
         ViewBag.BackUrl = Url.Action("Index", "ClientHome");
         ViewBag.BackText = "На главную";
 
@@ -123,7 +127,54 @@ public class WorkReportController(
                 PhotoPath = d.PhotoPath,
                 CreatedAt = d.CreatedAt,
             }).ToList(),
+            CanLeaveFeedback = log.IsCompleted && feedback == null,
+            Rating = feedback?.Rating,
+            FeedbackComment = feedback?.Comment,
+            FeedbackDate = feedback?.CreatedAt,
         });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> LeaveFeedback(int workLogId, int rating, string? comment)
+    {
+        var user = await GetCurrentUserAsync();
+        if (user?.OrganizationId is not int orgId || user.AccountType != AccountType.Client)
+            return Forbid();
+
+        if (rating < 1 || rating > 5)
+            return BadRequest("Оценка должна быть от 1 до 5.");
+
+        var clientObjectIds = await db.StockTransactions.AsNoTracking()
+            .Where(r => r.ClientId == orgId && r.WorkObjectId != null)
+            .Select(r => r.WorkObjectId!.Value)
+            .Distinct()
+            .ToListAsync();
+
+        var log = await db.WorkLogs.AsNoTracking()
+            .FirstOrDefaultAsync(w => w.Id == workLogId && clientObjectIds.Contains(w.WorkObjectId) && w.IsCompleted);
+
+        if (log is null) return NotFound();
+
+        var existing = await db.Feedbacks.FirstOrDefaultAsync(f => f.WorkLogId == workLogId && f.ClientUserId == user.Id);
+        if (existing != null)
+        {
+            TempData["Error"] = "Вы уже оставили отзыв.";
+            return RedirectToAction(nameof(Details), new { id = workLogId });
+        }
+
+        db.Feedbacks.Add(new Feedback
+        {
+            WorkLogId = workLogId,
+            ClientUserId = user.Id,
+            Rating = rating,
+            Comment = comment?.Trim(),
+            CreatedAt = DateTime.UtcNow,
+        });
+        await db.SaveChangesAsync();
+
+        TempData["Success"] = "Спасибо! Ваш отзыв сохранён.";
+        return RedirectToAction(nameof(Details), new { id = workLogId });
     }
 
     private async Task<ApplicationUser?> GetCurrentUserAsync()

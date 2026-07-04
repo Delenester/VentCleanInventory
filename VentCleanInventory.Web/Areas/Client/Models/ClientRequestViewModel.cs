@@ -30,9 +30,6 @@ public class ClientRequestViewModel
     [Display(Name = "Площадь (м²)")]
     public decimal? Area { get; set; }
 
-    [Display(Name = "Примерная стоимость (руб.)")]
-    public decimal? EstimatedCost { get; set; }
-
     [Display(Name = "Фото / чертёж")]
     public IFormFile? BlueprintPhoto { get; set; }
 

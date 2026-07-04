@@ -17,6 +17,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<DefectReport> DefectReports => Set<DefectReport>();
     public DbSet<Notification> Notifications => Set<Notification>();
     public DbSet<WorkChecklist> WorkChecklists => Set<WorkChecklist>();
+    public DbSet<Feedback> Feedbacks => Set<Feedback>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -83,5 +84,11 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             .WithMany()
             .HasForeignKey(x => x.OrganizationId)
             .OnDelete(DeleteBehavior.NoAction);
+
+        builder.Entity<Feedback>()
+            .HasOne(x => x.WorkLog)
+            .WithMany()
+            .HasForeignKey(x => x.WorkLogId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }
