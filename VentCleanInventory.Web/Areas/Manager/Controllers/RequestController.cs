@@ -54,19 +54,24 @@ public class RequestController(
         var req = await db.StockTransactions.FindAsync(id);
         if (req == null) return NotFound();
 
+        if (req.RequestStatusValue != RequestStatus.New && req.RequestStatusValue != RequestStatus.ClientConfirmed)
+        {
+            TempData["Error"] = "Заявку можно одобрить только со статусами «Новая» или «Договор подтверждён».";
+            return RedirectToAction(nameof(Index));
+        }
+
         req.RequestStatusValue = RequestStatus.Approved;
         req.EstimatedCost = estimatedCost;
-        req.ManagerNote = managerNote;
+        req.ManagerNote = managerNote?.Trim();
         req.AssignedMasterId = assignedMasterId;
         req.PlannedStartDate = plannedStartDate;
         req.PlannedEndDate = plannedEndDate;
 
-        req.ContractNumber = $"Д-{DateTime.Now:yyyyMMdd}-{req.Id}";
+        req.ContractNumber = $"Д-{DateTime.UtcNow:yyyyMMdd}-{req.Id}";
 
         await db.SaveChangesAsync();
 
-        var clientUser = await userManager.FindByIdAsync(req.UserId);
-        if (clientUser != null)
+        if (!string.IsNullOrWhiteSpace(req.UserId))
         {
             var masterName = "";
             if (!string.IsNullOrWhiteSpace(assignedMasterId))
@@ -96,18 +101,27 @@ public class RequestController(
         var req = await db.StockTransactions.FindAsync(id);
         if (req == null) return NotFound();
 
+        if (req.RequestStatusValue != RequestStatus.New && req.RequestStatusValue != RequestStatus.ClientConfirmed)
+        {
+            TempData["Error"] = "Заявку можно отклонить только со статусами «Новая» или «Договор подтверждён».";
+            return RedirectToAction(nameof(Index));
+        }
+
         req.RequestStatusValue = RequestStatus.Rejected;
-        req.ManagerNote = managerNote;
+        req.ManagerNote = managerNote?.Trim();
         await db.SaveChangesAsync();
 
-        db.Notifications.Add(new Notification
+        if (!string.IsNullOrWhiteSpace(req.UserId))
         {
-            UserId = req.UserId,
-            Title = "Заявка отклонена",
-            Message = $"Ваша заявка №{req.Id} отклонена. Причина: {managerNote}",
-            Link = "/Client/ClientHome",
-        });
-        await db.SaveChangesAsync();
+            db.Notifications.Add(new Notification
+            {
+                UserId = req.UserId,
+                Title = "Заявка отклонена",
+                Message = $"Ваша заявка №{req.Id} отклонена. Причина: {managerNote}",
+                Link = "/Client/ClientHome",
+            });
+            await db.SaveChangesAsync();
+        }
 
         TempData["Info"] = $"Заявка №{id} отклонена.";
         return RedirectToAction(nameof(Index));

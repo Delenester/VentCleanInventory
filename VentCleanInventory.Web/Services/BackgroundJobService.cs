@@ -61,16 +61,22 @@ public class BackgroundJobService(
             .Where(t => t.RequestStatusValue == RequestStatus.Approved && t.Date <= cutoff)
             .ToListAsync(ct);
 
+        if (pending.Count == 0) return;
+
         foreach (var req in pending)
         {
             req.RequestStatusValue = RequestStatus.ClientConfirmed;
             logger.LogInformation("Auto-confirmed contract for request #{Id}", req.Id);
         }
 
-        if (pending.Count > 0)
+        await db.SaveChangesAsync(ct);
+
+        var managerUsers = await userManager.GetUsersInRoleAsync(AppUserRole.Manager);
+        var managerIds = managerUsers.Select(u => u.Id).ToList();
+
+        if (managerIds.Count > 0)
         {
-            await db.SaveChangesAsync(ct);
-            await notificationService.NotifyRoleAsync(userManager, AppUserRole.Manager,
+            await notificationService.NotifyUsersAsync(managerIds,
                 "Автоподтверждение договора",
                 $"Автоматически подтверждено {pending.Count} договоров (истекло {AutoConfirmDays} дней).",
                 "/Manager/Request");

@@ -159,11 +159,7 @@ public class UsersController(
         var result = await userManager.DeleteAsync(user);
         if (!result.Succeeded)
         {
-            foreach (var error in result.Errors)
-            {
-                ModelState.AddModelError(string.Empty, error.Description);
-            }
-            return RedirectToAction(nameof(Index));
+            TempData["Error"] = string.Join("; ", result.Errors.Select(e => e.Description));
         }
 
         return RedirectToAction(nameof(Index));
@@ -176,18 +172,34 @@ public class UsersController(
         var user = await userManager.FindByIdAsync(id);
         if (user is null) return NotFound();
 
+        if (string.IsNullOrWhiteSpace(newPassword))
+        {
+            TempData["Error"] = "Введите новый пароль.";
+            return RedirectToAction(nameof(Edit), new { id });
+        }
+
+        if (newPassword.Length < 8)
+        {
+            TempData["Error"] = "Пароль должен содержать не менее 8 символов.";
+            return RedirectToAction(nameof(Edit), new { id });
+        }
+
+        if (!newPassword.Any(char.IsDigit))
+        {
+            TempData["Error"] = "Пароль должен содержать хотя бы одну цифру.";
+            return RedirectToAction(nameof(Edit), new { id });
+        }
+
         var token = await userManager.GeneratePasswordResetTokenAsync(user);
         var result = await userManager.ResetPasswordAsync(user, token, newPassword);
 
         if (!result.Succeeded)
         {
-            foreach (var error in result.Errors)
-            {
-                ModelState.AddModelError(string.Empty, error.Description);
-            }
+            TempData["Error"] = string.Join("; ", result.Errors.Select(e => e.Description));
             return RedirectToAction(nameof(Edit), new { id });
         }
 
+        TempData["Success"] = $"Пароль для «{user.UserName}» изменён.";
         return RedirectToAction(nameof(Index));
     }
 

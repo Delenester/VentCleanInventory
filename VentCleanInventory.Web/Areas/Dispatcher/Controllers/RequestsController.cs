@@ -65,6 +65,11 @@ public class RequestsController(
             .FirstOrDefaultAsync(r => r.Id == id);
 
         if (req is null || req.RequestStatusValue == null) return NotFound();
+        if (req.RequestStatusValue != RequestStatus.New && req.RequestStatusValue != RequestStatus.ClientConfirmed)
+        {
+            TempData["Error"] = "Выдача доступна только для заявок со статусами «Новая» или «Договор подтверждён».";
+            return RedirectToAction(nameof(Details), new { id });
+        }
 
         var items = req.GetItems();
 
@@ -220,7 +225,7 @@ public class RequestsController(
         var req = await db.StockTransactions.FirstOrDefaultAsync(r => r.Id == model.RequestId);
         if (req is not null)
         {
-            if (req.RequestStatusValue != RequestStatus.New)
+            if (req.RequestStatusValue != RequestStatus.New && req.RequestStatusValue != RequestStatus.ClientConfirmed)
                 return BadRequest("Заявка уже обработана.");
             req.RequestStatusValue = RequestStatus.Assigned;
             await db.SaveChangesAsync();

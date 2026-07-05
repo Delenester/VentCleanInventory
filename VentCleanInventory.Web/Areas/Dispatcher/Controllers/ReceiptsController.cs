@@ -89,8 +89,6 @@ public class ReceiptsController(
                     };
 
                     db.InventoryItems.Add(item);
-                    await db.SaveChangesAsync();
-
                     receiptLines.Add((item.Id, 1, line.UnitPrice));
                 }
             }
@@ -108,11 +106,11 @@ public class ReceiptsController(
                 };
 
                 db.InventoryItems.Add(item);
-                await db.SaveChangesAsync();
-
                 receiptLines.Add((item.Id, line.Quantity, line.UnitPrice));
             }
         }
+
+        await db.SaveChangesAsync();
 
         var txId = await stockService.ApplyReceiptAsync(
             toWarehouseId: centralWarehouseId,

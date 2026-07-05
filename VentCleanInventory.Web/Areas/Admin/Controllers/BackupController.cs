@@ -21,18 +21,26 @@ public class BackupController(BackupService backupService) : Controller
     {
         if (string.IsNullOrWhiteSpace(directoryPath))
         {
-            TempData["Info"] = "Укажите путь для сохранения бэкапа.";
+            TempData["Error"] = "Укажите путь для сохранения бэкапа.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        var path = directoryPath.Trim();
+
+        if (path.IndexOfAny(Path.GetInvalidPathChars()) >= 0)
+        {
+            TempData["Error"] = "Путь содержит недопустимые символы.";
             return RedirectToAction(nameof(Index));
         }
 
         try
         {
-            var path = await backupService.RunBackupAsync(directoryPath.Trim());
-            TempData["Info"] = $"Бэкап создан: {path}";
+            var result = await backupService.RunBackupAsync(path);
+            TempData["Success"] = $"Бэкап создан: {result}";
         }
         catch (Exception ex)
         {
-            TempData["Info"] = $"Ошибка бэкапа: {ex.Message}";
+            TempData["Error"] = $"Ошибка бэкапа: {ex.Message}";
         }
 
         return RedirectToAction(nameof(Index));

@@ -115,8 +115,25 @@ public class WarehousesController(
         var w = await db.Warehouses.FindAsync(id);
         if (w is null) return NotFound();
 
+        var hasBalances = await db.StockBalances.AsNoTracking()
+            .AnyAsync(b => b.WarehouseId == id && b.Quantity > 0);
+        if (hasBalances)
+        {
+            TempData["Error"] = $"Нельзя удалить склад «{w.Name}» — на нём есть остатки.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        var hasTransactions = await db.StockTransactions.AsNoTracking()
+            .AnyAsync(t => t.FromWarehouseId == id || t.ToWarehouseId == id);
+        if (hasTransactions)
+        {
+            TempData["Error"] = $"Нельзя удалить склад «{w.Name}» — он используется в транзакциях.";
+            return RedirectToAction(nameof(Index));
+        }
+
         db.Warehouses.Remove(w);
         await db.SaveChangesAsync();
+        TempData["Success"] = $"Склад «{w.Name}» удалён.";
         return RedirectToAction(nameof(Index));
     }
 

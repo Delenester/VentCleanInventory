@@ -38,7 +38,11 @@ public class MyWorkController(ApplicationDbContext db, UserManager<ApplicationUs
         if (string.IsNullOrWhiteSpace(userId)) return Forbid();
 
         var vm = await BuildDetailAsync(id);
-        if (vm == null || vm.MasterName != (await userManager.FindByIdAsync(userId))?.FullName) return NotFound();
+        if (vm == null) return NotFound();
+
+        var currentUser = await userManager.FindByIdAsync(userId);
+        if (currentUser == null || vm.MasterName != (currentUser.FullName ?? currentUser.UserName))
+            return NotFound();
 
         ViewBag.BackUrl = Url.Action(nameof(Index));
         ViewBag.BackText = "К моим работам";

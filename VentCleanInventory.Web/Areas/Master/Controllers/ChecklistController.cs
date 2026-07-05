@@ -50,6 +50,9 @@ public class ChecklistController(ApplicationDbContext db) : Controller
         var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
         if (string.IsNullOrWhiteSpace(userId)) return Forbid();
 
+        var log = await db.WorkLogs.FindAsync(workLogId);
+        if (log == null || log.MasterUserId != userId) return NotFound();
+
         var items = await db.WorkChecklists
             .Where(c => c.WorkLogId == workLogId)
             .ToListAsync();
@@ -62,12 +65,8 @@ public class ChecklistController(ApplicationDbContext db) : Controller
                 item.Note = note;
         }
 
-        var log = await db.WorkLogs.FindAsync(workLogId);
-        if (log != null)
-        {
-            log.ChecklistDone = items.All(i => i.IsDone);
-            log.ChecklistData = JsonSerializer.Serialize(items.Select(i => new { i.ItemName, i.IsDone, i.Note }));
-        }
+        log.ChecklistDone = items.All(i => i.IsDone);
+        log.ChecklistData = JsonSerializer.Serialize(items.Select(i => new { i.ItemName, i.IsDone, i.Note }));
 
         await db.SaveChangesAsync();
         TempData["Success"] = "Чек-лист сохранён.";
@@ -78,8 +77,11 @@ public class ChecklistController(ApplicationDbContext db) : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> UploadChecklistPhoto(int id, IFormFile photo)
     {
-        var item = await db.WorkChecklists.FindAsync(id);
-        if (item == null) return NotFound();
+        var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrWhiteSpace(userId)) return Forbid();
+
+        var item = await db.WorkChecklists.Include(c => c.WorkLog).FirstOrDefaultAsync(c => c.Id == id);
+        if (item == null || item.WorkLog?.MasterUserId != userId) return NotFound();
 
         if (photo is { Length: > 0 })
         {
