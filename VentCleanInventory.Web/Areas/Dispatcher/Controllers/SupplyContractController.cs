@@ -87,7 +87,7 @@ public class SupplyContractController(
             .Font("Times New Roman").FontSize(fs);
 
         doc.InsertParagraph("2. ЦЕНА И ПОРЯДОК РАСЧЁТОВ").Bold().Font("Times New Roman").FontSize(13).SpacingBefore(14);
-        var totalCost = req.Items.Sum(i => i.Quantity);
+        var totalCost = req.Items.Where(i => i.UnitPrice.HasValue).Sum(i => i.Quantity * i.UnitPrice!.Value);
         doc.InsertParagraph(
             "2.1. Цена на Товар устанавливается в белорусских рублях и указывается в спецификации.")
             .Font("Times New Roman").FontSize(fs);
@@ -207,7 +207,11 @@ public class SupplyContractController(
             ri++;
         }
 
-        tt.Rows[ri].Cells[3].Paragraphs[0].Append($"Итого: {req.Items.Sum(i => i.Quantity):N1}").Bold().Font("Times New Roman").FontSize(fs);
+        tt.Rows[ri].Cells[2].Paragraphs[0].Append("ИТОГО:").Bold().Font("Times New Roman").FontSize(fs);
+        tt.Rows[ri].Cells[3].Paragraphs[0].Append(req.Items.Sum(i => i.Quantity).ToString("N1")).Bold().Font("Times New Roman").FontSize(fs);
+        tt.Rows[ri].Cells[3].Paragraphs[0].Alignment = Alignment.center;
+        tt.Rows[ri].Cells[4].Paragraphs[0].Append(totalCost > 0 ? $"{totalCost:N2} BYN" : "—").Bold().Font("Times New Roman").FontSize(fs);
+        tt.Rows[ri].Cells[4].Paragraphs[0].Alignment = Alignment.center;
         doc.InsertTable(tt);
 
         doc.InsertParagraph().SpacingBefore(12);

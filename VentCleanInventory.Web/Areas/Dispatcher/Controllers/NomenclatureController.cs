@@ -140,8 +140,24 @@ public class NomenclatureController(
         var item = await db.Nomenclatures.FindAsync(id);
         if (item is null) return NotFound();
 
+        var hasSupplyItems = await db.SupplyRequests
+            .AnyAsync(r => r.Items.Any(i => i.NomenclatureId == id));
+        if (hasSupplyItems)
+        {
+            TempData["Error"] = $"Нельзя удалить «{item.Name}» — используется в запросах на поставку.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        var hasInventory = await db.InventoryItems.AnyAsync(i => i.NomenclatureId == id);
+        if (hasInventory)
+        {
+            TempData["Error"] = $"Нельзя удалить «{item.Name}» — есть записи на складе.";
+            return RedirectToAction(nameof(Index));
+        }
+
         db.Nomenclatures.Remove(item);
         await db.SaveChangesAsync();
+        TempData["Success"] = $"Номенклатура «{item.Name}» удалена.";
         return RedirectToAction(nameof(Index));
     }
 
@@ -219,11 +235,23 @@ public class NomenclatureController(
 
             if (rows == null) return BadRequest("Файл пустой");
 
+            var existingNames = (await db.Nomenclatures.AsNoTracking()
+                .Select(n => n.Name.ToLower())
+                .ToListAsync())
+                .ToHashSet();
+
             var imported = 0;
+            var skipped = 0;
             foreach (var row in rows)
             {
                 var name = row.Cell(1).GetString()?.Trim();
                 if (string.IsNullOrWhiteSpace(name)) continue;
+
+                if (existingNames.Contains(name.ToLower()))
+                {
+                    skipped++;
+                    continue;
+                }
 
                 var isEquipment = row.Cell(2).GetString()?.ToLower() == "да";
                 var unit = row.Cell(3).GetString()?.Trim();
@@ -234,12 +262,14 @@ public class NomenclatureController(
                     IsEquipment = isEquipment,
                     Unit = string.IsNullOrWhiteSpace(unit) ? "" : unit
                 });
-
+                existingNames.Add(name.ToLower());
                 imported++;
             }
 
             await db.SaveChangesAsync();
-            TempData["Info"] = $"Импортировано {imported} записей";
+            var msg = $"Импортировано {imported} записей";
+            if (skipped > 0) msg += $", пропущено {skipped} (дубликаты)";
+            TempData["Info"] = msg;
             return RedirectToAction(nameof(Index));
         }
         catch (Exception ex)

@@ -2,6 +2,7 @@
 
 @{
     ViewData["Title"] = $"Подтверждение запроса {Model.RequestNumber}";
+    var allPiece = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "шт", "шт.", "штук", "ед", "ед.", "комплект", "компл." };
 }
 
 <div class="page-header d-flex align-items-center gap-2">
@@ -11,13 +12,9 @@
     <h1 class="m-0">@ViewData["Title"]</h1>
 </div>
 
-<div class="card mb-3">
-    <div class="card-body">
-        <div class="alert alert-info">
-            <i class="bi bi-info-circle me-2"></i>
-            Укажите цены и количество, которое можете поставить. Поля с ценой обязательны.
-        </div>
-    </div>
+<div class="alert alert-info">
+    <i class="bi bi-info-circle me-2"></i>
+    Укажите количество и цену, которую можете поставить. Количество не может превышать запрошенное.
 </div>
 
 <form asp-action="Confirm" asp-route-id="@Model.RequestId" method="post" class="decimal-fix">
@@ -33,38 +30,48 @@
                     <thead>
                         <tr>
                             <th>Наименование</th>
-                            <th>Запрошено</th>
-                            <th>Ед.</th>
-                            <th>Поставляю</th>
-                            <th>Цена за ед.</th>
+                            <th class="text-center">Запрошено</th>
+                            <th class="text-center">Ед.</th>
+                            <th class="text-center" style="width:120px;">Поставляю</th>
+                            <th class="text-center" style="width:130px;">Цена за ед.</th>
                             <th>Примечание</th>
                         </tr>
                     </thead>
                     <tbody>
                         @for (var i = 0; i < Model.Items.Count; i++)
                         {
+                            var isPiece = allPiece.Contains(Model.Items[i].Unit?.Trim().ToLower() ?? "");
+                            var step = isPiece ? "1" : "0.01";
+                            var fmt = isPiece ? "N0" : "N2";
+                            var maxVal = Model.Items[i].OrderedQuantity;
+
                             <tr>
                                 <td>
-                                    @Model.Items[i].NomenclatureName
+                                    <div class="fw-semibold">@Model.Items[i].NomenclatureName</div>
                                     <input type="hidden" name="Items[@i].SupplyRequestItemId" value="@Model.Items[i].SupplyRequestItemId" />
                                     <input type="hidden" name="Items[@i].NomenclatureName" value="@Model.Items[i].NomenclatureName" />
                                     <input type="hidden" name="Items[@i].OrderedQuantity" value="@Model.Items[i].OrderedQuantity" />
                                     <input type="hidden" name="Items[@i].Unit" value="@Model.Items[i].Unit" />
                                 </td>
-                                <td>@Model.Items[i].OrderedQuantity.ToString("N1")</td>
-                                <td>@Model.Items[i].Unit</td>
+                                <td class="text-center fw-semibold">@Model.Items[i].OrderedQuantity.ToString(fmt)</td>
+                                <td class="text-center text-muted">@Model.Items[i].Unit</td>
                                 <td>
-                                    <input type="text" inputmode="decimal" name="Items[@i].ConfirmedQuantity" value="@Model.Items[i].ConfirmedQuantity.ToString("F1")"
-                                           class="form-control form-control-sm dec-input" style="width:90px" />
-                                    <div class="text-danger small" style="display:none" id="qty-warn-@i">Не больше @Model.Items[i].OrderedQuantity.ToString("F1")</div>
+                                    <input type="text" inputmode="decimal" name="Items[@i].ConfirmedQuantity"
+                                           value="@Model.Items[i].ConfirmedQuantity.ToString(fmt)"
+                                           step="@step" min="0" max="@maxVal.ToString("F1", System.Globalization.CultureInfo.InvariantCulture)"
+                                           class="form-control form-control-sm dec-input text-end qty-input" data-idx="@i" data-max="@maxVal" />
+                                    <div class="text-danger small mt-1" style="display:none" id="qty-warn-@i">
+                                        <i class="bi bi-exclamation-triangle"></i> Макс. @maxVal.ToString(fmt)
+                                    </div>
                                 </td>
                                 <td>
                                     <input type="text" inputmode="decimal" name="Items[@i].UnitPrice" value=""
-                                           class="form-control form-control-sm dec-input" style="width:110px" required />
+                                           class="form-control form-control-sm dec-input text-end" style="width:110px" required
+                                           placeholder="0.00" />
                                 </td>
                                 <td>
                                     <input type="text" name="Items[@i].Note" value="@(Model.Items[i].Note ?? "")"
-                                           class="form-control form-control-sm" style="width:150px" />
+                                           class="form-control form-control-sm" placeholder="Комментарий..." />
                                 </td>
                             </tr>
                         }
@@ -75,20 +82,21 @@
         <div class="card-footer">
             <div class="row g-3 align-items-end">
                 <div class="col-md-6">
-                    <label asp-for="Note" class="form-label"></label>
-                    <textarea asp-for="Note" class="form-control" rows="2" style="max-width:400px"></textarea>
+                    <label asp-for="Note" class="form-label fw-semibold">Общий комментарий к заказу</label>
+                    <textarea asp-for="Note" class="form-control" rows="2" style="max-width:400px" placeholder="Дополнительная информация..."></textarea>
                 </div>
                 <div class="col-md-6 text-md-end">
-                    <button type="submit" class="btn btn-success">
-                        <i class="bi bi-check2-circle"></i> Подтвердить
+                    <button type="submit" class="btn btn-success btn-lg">
+                        <i class="bi bi-check2-circle me-1"></i> Подтвердить
                     </button>
-                    <a asp-action="Index" class="btn btn-outline-secondary">Отмена</a>
+                    <a asp-action="Index" class="btn btn-outline-secondary btn-lg">Отмена</a>
                 </div>
             </div>
         </div>
     </div>
 </form>
 
+@section Scripts {
 <script>
     function parseDec(v) { return parseFloat((v || '').replace(',', '.')); }
 
@@ -98,32 +106,26 @@
             if (decs[i].value) decs[i].value = decs[i].value.replace('.', ',');
         }
     });
-    @for (var i = 0; i < Model.Items.Count; i++)
-    {
-        var max = Model.Items[i].OrderedQuantity;
-        <text>
-        (function() {
-            var inp = document.querySelector('input[name="Items[@i].ConfirmedQuantity"]');
-            if (inp) {
-                inp.addEventListener('input', function() {
-                    var warn = document.getElementById('qty-warn-@i');
-                    if (parseDec(this.value) > @max.ToString("F1").Replace(",", ".")) {
-                        this.classList.add('is-invalid');
-                        if (warn) warn.style.display = 'block';
-                    } else {
-                        this.classList.remove('is-invalid');
-                        if (warn) warn.style.display = 'none';
-                    }
-                });
-                inp.closest('form').addEventListener('submit', function(e) {
-                    if (parseDec(inp.value) > @max.ToString("F1").Replace(",", ".")) {
-                        e.preventDefault();
-                        inp.classList.add('is-invalid');
-                        if (warn) warn.style.display = 'block';
-                    }
-                });
+
+    document.querySelectorAll('.qty-input').forEach(function(inp) {
+        var max = parseFloat(inp.dataset.max);
+        var idx = inp.dataset.idx;
+        var warn = document.getElementById('qty-warn-' + idx);
+        function check() {
+            var v = parseDec(inp.value);
+            if (!isNaN(v) && v > max) {
+                inp.classList.add('is-invalid');
+                if (warn) warn.style.display = 'block';
+            } else {
+                inp.classList.remove('is-invalid');
+                if (warn) warn.style.display = 'none';
             }
-        })();
-        </text>
-    }
+        }
+        inp.addEventListener('input', check);
+        inp.closest('form').addEventListener('submit', function(e) {
+            check();
+            if (inp.classList.contains('is-invalid')) e.preventDefault();
+        });
+    });
 </script>
+}

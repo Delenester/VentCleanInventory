@@ -17,10 +17,18 @@
     </a>
 </div>
 
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle me-2"></i>@TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
 <div class="content-card">
     <div class="card-body">
         <div class="btn-group mb-3 flex-wrap" role="group">
-            <a asp-action="Index" class="btn btn-sm @(string.IsNullOrEmpty(selected) ? "btn-primary" : "btn-outline-secondary")">Новые + Подтверждённые</a>
+            <a asp-action="Index" class="btn btn-sm @(string.IsNullOrEmpty(selected) ? "btn-primary" : "btn-outline-secondary")">Активные</a>
             <a asp-action="Index" asp-route-status="1" class="btn btn-sm @(selected == "1" ? "btn-primary" : "btn-outline-secondary")">Новые</a>
             <a asp-action="Index" asp-route-status="2" class="btn btn-sm @(selected == "2" ? "btn-primary" : "btn-outline-secondary")">Отправлены</a>
             <a asp-action="Index" asp-route-status="3" class="btn btn-sm @(selected == "3" ? "btn-primary" : "btn-outline-secondary")">Подтверждены</a>

@@ -146,6 +146,12 @@ public class SupplyRequestsController(
                 return View(model);
             }
 
+            if (line.UnitPrice is null || line.UnitPrice <= 0)
+            {
+                ModelState.AddModelError("", $"По позиции «{reqItem.Nomenclature?.Name}» укажите цену поставки.");
+                return View(model);
+            }
+
             reqItem.ConfirmedQuantity = line.ConfirmedQuantity;
             reqItem.UnitPrice = line.UnitPrice;
             reqItem.Note = line.Note;
@@ -153,8 +159,6 @@ public class SupplyRequestsController(
 
         req.Status = SupplyRequestStatus.Confirmed;
         req.Note = model.Note;
-
-        var adminManagerUrl = Url.Action("Index", "SupplyRequests", new { area = "Admin" }) ?? "/Admin/SupplyRequests";
 
         await notificationService.NotifyRoleAsync(userManager, AppUserRole.Admin,
             "Запрос на поставку подтверждён",
@@ -179,11 +183,17 @@ public class SupplyRequestsController(
         if (user?.OrganizationId is not int orgId) return Forbid();
 
         var req = await db.SupplyRequests.FirstOrDefaultAsync(r => r.Id == id && r.OrganizationId == orgId);
-        if (req is null || req.Status is SupplyRequestStatus.Completed or SupplyRequestStatus.Cancelled)
+        if (req is null || req.Status != SupplyRequestStatus.Sent)
             return NotFound();
 
         req.Status = SupplyRequestStatus.Cancelled;
         await db.SaveChangesAsync();
+
+        await notificationService.NotifyRoleAsync(userManager, AppUserRole.Dispatcher,
+            "Запрос отклонён поставщиком",
+            $"Поставщик отклонил запрос №{req.Number}.",
+            "/Dispatcher/SupplyRequests");
+
         TempData["Success"] = $"Запрос №{req.Number} отклонён.";
         return RedirectToAction(nameof(Index));
     }

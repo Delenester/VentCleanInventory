@@ -60,7 +60,7 @@
                                     </select>
                                 </td>
                                 <td>
-                                    <input asp-for="Lines[i].Quantity" class="form-control text-end" />
+                                    <input asp-for="Lines[i].Quantity" class="form-control text-end" step="1" min="0.01" />
                                 </td>
                                 <td class="text-center">
                                     <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeRow(this)">
@@ -93,18 +93,34 @@
     <script>
         const nomenclaturesHtml = `@Html.Raw(string.Join("", Model.Nomenclatures.Select(n => $"<option value=\\\"{n.Id}\\\">{System.Net.WebUtility.HtmlEncode($"{n.Name} ({n.Unit})")}</option>")))`;
 
+        const pieceUnits = ['шт','шт.','штук','ед','ед.','комплект','компл.'];
+
+        function getStep(unit) {
+            return pieceUnits.indexOf((unit||'').trim().toLowerCase()) >= 0 ? '1' : '0.01';
+        }
+
+        function updateQtyStep(sel) {
+            var opt = sel.options[sel.selectedIndex];
+            if (!opt || !opt.value) return;
+            var text = opt.textContent || '';
+            var m = text.match(/\((.+)\)\s*$/);
+            var unit = m ? m[1] : '';
+            var inp = sel.closest('tr').querySelector('input[name$=".Quantity"]');
+            if (inp) inp.step = getStep(unit);
+        }
+
         function addRow() {
             const tbody = document.querySelector('#linesTable tbody');
             const index = tbody.querySelectorAll('tr').length;
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td>
-                  <select class="form-select" name="Lines[${index}].NomenclatureId">
+                  <select class="form-select" name="Lines[${index}].NomenclatureId" onchange="updateQtyStep(this)">
                     <option value="">— выберите —</option>
                     ${nomenclaturesHtml}
                   </select>
                 </td>
-                <td><input class="form-control text-end" name="Lines[${index}].Quantity" value="1" /></td>
+                <td><input class="form-control text-end" name="Lines[${index}].Quantity" value="1" step="1" min="0.01" /></td>
                 <td class="text-center"><button type="button" class="btn btn-outline-danger btn-sm" onclick="removeRow(this)"><i class="bi bi-x-lg"></i></button></td>
             `;
             tbody.appendChild(tr);
@@ -114,5 +130,9 @@
             var tr = btn.closest('tr');
             if (!tr) tr.remove();
         }
+
+        document.querySelectorAll('#linesTable select[name$="NomenclatureId"]').forEach(function(sel) {
+            sel.addEventListener('change', function() { updateQtyStep(this); });
+        });
     </script>
 }

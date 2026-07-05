@@ -27,5 +27,16 @@ public class Nomenclature
     [Display(Name = "Описание")]
     [MaxLength(1000)]
     public string? Description { get; set; }
+
+    private static readonly HashSet<string> PieceUnits = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "шт", "шт.", "штук", "piece", "pc", "ед", "ед.", "единица", "единицы", "комплект", "компл.", "упак", "упак."
+    };
+
+    public bool IsPieceUnit() => PieceUnits.Contains(Unit?.Trim().ToLower() ?? "");
+
+    public string QuantityStep() => IsPieceUnit() ? "1" : "0.01";
+
+    public string FormatQuantity(decimal qty) => IsPieceUnit() ? qty.ToString("N0") : qty.ToString("N2");
 }
 

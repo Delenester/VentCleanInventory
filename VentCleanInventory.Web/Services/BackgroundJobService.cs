@@ -151,10 +151,18 @@ public class BackgroundJobService(
 
             if (pendingReq == null)
             {
-                var reqCount = await db.SupplyRequests.CountAsync(ct) + 1;
+                var maxNum = await db.SupplyRequests
+                    .Where(r => r.Number.StartsWith($"З-{now:yyyyMMdd}-"))
+                    .Select(r => r.Number)
+                    .OrderByDescending(n => n)
+                    .FirstOrDefaultAsync(ct);
+                var seq = 1;
+                if (maxNum != null && int.TryParse(maxNum.Split('-').Last(), out var lastNum))
+                    seq = lastNum + 1;
+
                 pendingReq = new SupplyRequest
                 {
-                    Number = $"З-{now:yyyyMMdd}-{reqCount:D4}",
+                    Number = $"З-{now:yyyyMMdd}-{seq:D4}",
                     OrganizationId = nom.PreferredSupplierId!.Value,
                     CreatedAt = now,
                     Status = SupplyRequestStatus.New,

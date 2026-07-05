@@ -56,11 +56,18 @@ public class SupplyRequestsController(
         if (!ModelState.IsValid) return View(model);
 
         var now = DateTime.UtcNow;
-        var reqCount = await db.SupplyRequests.CountAsync() + 1;
+        var maxNum = await db.SupplyRequests
+            .Where(r => r.Number.StartsWith($"З-{now:yyyyMMdd}-"))
+            .Select(r => r.Number)
+            .OrderByDescending(n => n)
+            .FirstOrDefaultAsync();
+        var seq = 1;
+        if (maxNum != null && int.TryParse(maxNum.Split('-').Last(), out var lastNum))
+            seq = lastNum + 1;
 
         var req = new SupplyRequest
         {
-            Number = $"З-{now:yyyyMMdd}-{reqCount:D4}",
+            Number = $"З-{now:yyyyMMdd}-{seq:D4}",
             OrganizationId = model.SupplierId!.Value,
             CreatedAt = now,
             Status = SupplyRequestStatus.New,
@@ -134,12 +141,31 @@ public class SupplyRequestsController(
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Cancel(int id)
     {
-        var req = await db.SupplyRequests.FirstOrDefaultAsync(r => r.Id == id);
-        if (req is null || req.Status is SupplyRequestStatus.Completed or SupplyRequestStatus.Cancelled)
+        var req = await db.SupplyRequests.Include(r => r.Organization).FirstOrDefaultAsync(r => r.Id == id);
+        if (req is null || req.Status is not (SupplyRequestStatus.New or SupplyRequestStatus.Sent))
             return NotFound();
 
+        var wasSent = req.Status == SupplyRequestStatus.Sent;
         req.Status = SupplyRequestStatus.Cancelled;
         await db.SaveChangesAsync();
+
+        if (wasSent)
+        {
+            var supplierUsers = await userManager.GetUsersInRoleAsync(AppUserRole.Supplier);
+            var supplierUserIds = supplierUsers
+                .Where(u => u.OrganizationId == req.OrganizationId)
+                .Select(u => u.Id)
+                .ToList();
+
+            if (supplierUserIds.Count > 0)
+            {
+                await notificationService.NotifyUsersAsync(supplierUserIds,
+                    "Запрос отменён",
+                    $"Запрос №{req.Number} отменён диспетчером.",
+                    "/Supplier/SupplyRequests");
+            }
+        }
+
         TempData["Success"] = $"Запрос №{req.Number} отменён.";
         return RedirectToAction(nameof(Index));
     }
@@ -206,6 +232,21 @@ public class SupplyRequestsController(
 
         if (centralWh is null) return BadRequest("Центральный склад не найден.");
 
+        foreach (var line in model.Items)
+        {
+            var reqItem = req.Items.FirstOrDefault(i => i.Id == line.SupplyRequestItemId);
+            if (reqItem is null) continue;
+
+            var maxQty = reqItem.ConfirmedQuantity ?? reqItem.Quantity;
+            if (line.ReceivedQuantity > maxQty)
+            {
+                ModelState.AddModelError("", $"По позиции «{reqItem.Nomenclature?.Name}» получено больше, чем подтверждено ({maxQty:N1}).");
+                model.SupplierName = req.Organization?.Name ?? "";
+                model.CentralWarehouseId = centralWh.Id;
+                return View(model);
+            }
+        }
+
         var receiptLines = new List<(int inventoryItemId, decimal quantity, decimal? unitPrice)>();
         var anyReceived = false;
 
@@ -232,32 +273,26 @@ public class SupplyRequestsController(
                 for (var i = 0; i < count; i++)
                 {
                     var serial = $"EQ-{nom.Id:D3}-{nextSerial + i:D4}";
-                    var item = new InventoryItem
+                    db.InventoryItems.Add(new InventoryItem
                     {
                         NomenclatureId = nom.Id,
                         SerialNumber = serial,
                         PurchaseDate = DateTime.UtcNow,
                         OrganizationId = req.OrganizationId,
                         PurchasePrice = line.UnitPrice,
-                    };
-                    db.InventoryItems.Add(item);
-                    await db.SaveChangesAsync();
-                    receiptLines.Add((item.Id, 1, line.UnitPrice));
+                    });
                 }
             }
             else
             {
-                var item = new InventoryItem
+                db.InventoryItems.Add(new InventoryItem
                 {
                     NomenclatureId = nom.Id,
                     SerialNumber = null,
                     PurchaseDate = DateTime.UtcNow,
                     OrganizationId = req.OrganizationId,
                     PurchasePrice = line.UnitPrice,
-                };
-                db.InventoryItems.Add(item);
-                await db.SaveChangesAsync();
-                receiptLines.Add((item.Id, line.ReceivedQuantity, line.UnitPrice));
+                });
             }
 
             var reqItem = req.Items.FirstOrDefault(i => i.Id == line.SupplyRequestItemId);
@@ -269,10 +304,38 @@ public class SupplyRequestsController(
         {
             ModelState.AddModelError("", "Укажите хотя бы одну полученную позицию.");
             model.SupplierName = req.Organization?.Name ?? "";
-            var centralWh2 = await db.Warehouses.AsNoTracking()
-                .Where(w => w.Type == WarehouseType.Central).FirstOrDefaultAsync();
-            model.CentralWarehouseId = centralWh2?.Id ?? 0;
+            model.CentralWarehouseId = centralWh.Id;
             return View(model);
+        }
+
+        await db.SaveChangesAsync();
+
+        foreach (var line in model.Items.Where(l => l.ReceivedQuantity > 0))
+        {
+            var nom = db.Nomenclatures.Find(line.NomenclatureId);
+            if (nom is null) continue;
+
+            if (nom.IsEquipment)
+            {
+                var count = (int)Math.Round(line.ReceivedQuantity, MidpointRounding.AwayFromZero);
+                var newItems = await db.InventoryItems
+                    .Where(i => i.NomenclatureId == nom.Id && i.OrganizationId == req.OrganizationId)
+                    .OrderByDescending(i => i.Id)
+                    .Take(count)
+                    .ToListAsync();
+                foreach (var item in newItems)
+                    receiptLines.Add((item.Id, 1, line.UnitPrice));
+            }
+            else
+            {
+                var items = await db.InventoryItems
+                    .Where(i => i.NomenclatureId == nom.Id && i.OrganizationId == req.OrganizationId && i.SerialNumber == null)
+                    .OrderByDescending(i => i.Id)
+                    .Take(1)
+                    .ToListAsync();
+                foreach (var item in items)
+                    receiptLines.Add((item.Id, line.ReceivedQuantity, line.UnitPrice));
+            }
         }
 
         var allReceived = req.Items.All(i => i.ReceivedQuantity >= (i.ConfirmedQuantity ?? i.Quantity));

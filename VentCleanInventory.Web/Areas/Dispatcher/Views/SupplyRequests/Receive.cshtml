@@ -13,14 +13,18 @@
 
 <div class="card mb-3">
     <div class="card-body">
-        <div class="row g-2">
-            <div class="col-md-6">
-                <div class="text-muted small">Поставщик</div>
-                <div class="fw-semibold">@Model.SupplierName</div>
+        <div class="row g-3">
+            <div class="col-md-4">
+                <div class="text-muted small mb-1">Поставщик</div>
+                <div class="fw-semibold"><i class="bi bi-building me-1"></i>@Model.SupplierName</div>
             </div>
-            <div class="col-md-6">
-                <div class="text-muted small">Номер запроса</div>
-                <div class="fw-semibold">@Model.RequestNumber</div>
+            <div class="col-md-4">
+                <div class="text-muted small mb-1">Номер запроса</div>
+                <div class="fw-semibold"><i class="bi bi-hash me-1"></i>@Model.RequestNumber</div>
+            </div>
+            <div class="col-md-4">
+                <div class="text-muted small mb-1">Позиций</div>
+                <div class="fw-semibold"><i class="bi bi-box me-1"></i>@Model.Items.Count</div>
             </div>
         </div>
     </div>
@@ -41,18 +45,33 @@
                     <thead>
                         <tr>
                             <th>Наименование</th>
-                            <th>Заказано</th>
-                            <th>Ед.</th>
-                            <th>Цена поставщика</th>
-                            <th>Получено</th>
+                            <th class="text-center">Заказано</th>
+                            <th class="text-center">Ед.</th>
+                            <th class="text-end">Цена за ед.</th>
+                            <th class="text-end">Сумма</th>
+                            <th class="text-center" style="width: 130px;">Получено</th>
                         </tr>
                     </thead>
                     <tbody>
+                        @{
+                            var totalSum = 0m;
+                            var allPiece = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "шт", "шт.", "штук", "ед", "ед.", "комплект", "компл." };
+                        }
                         @for (var i = 0; i < Model.Items.Count; i++)
                         {
+                            var isPiece = allPiece.Contains(Model.Items[i].Unit?.Trim().ToLower() ?? "");
+                            var step = isPiece ? "1" : "0.01";
+                            var fmt = isPiece ? "N0" : "N2";
+                            var lineSum = (Model.Items[i].UnitPrice ?? 0) * Model.Items[i].ReceivedQuantity;
+                            totalSum += lineSum;
+
                             <tr>
                                 <td>
-                                    @Model.Items[i].NomenclatureName
+                                    <div class="fw-semibold">@Model.Items[i].NomenclatureName</div>
+                                    @if (Model.Items[i].IsEquipment)
+                                    {
+                                        <span class="badge bg-info text-dark small">Оборудование</span>
+                                    }
                                     <input type="hidden" name="Items[@i].SupplyRequestItemId" value="@Model.Items[i].SupplyRequestItemId" />
                                     <input type="hidden" name="Items[@i].NomenclatureId" value="@Model.Items[i].NomenclatureId" />
                                     <input type="hidden" name="Items[@i].NomenclatureName" value="@Model.Items[i].NomenclatureName" />
@@ -61,30 +80,41 @@
                                     <input type="hidden" name="Items[@i].IsEquipment" value="@Model.Items[i].IsEquipment.ToString().ToLower()" />
                                     <input type="hidden" name="Items[@i].UnitPrice" value="@(Model.Items[i].UnitPrice?.ToString("F2") ?? "")" />
                                 </td>
-                                <td>@Model.Items[i].OrderedQuantity.ToString("N1")</td>
-                                <td>@Model.Items[i].Unit</td>
-                                <td>@(Model.Items[i].UnitPrice?.ToString("N2") ?? "—")</td>
+                                <td class="text-center fw-semibold">@Model.Items[i].OrderedQuantity.ToString(fmt)</td>
+                                <td class="text-center text-muted">@Model.Items[i].Unit</td>
+                                <td class="text-end">@(Model.Items[i].UnitPrice?.ToString("N2") ?? "—")</td>
+                                <td class="text-end fw-semibold">@(Model.Items[i].UnitPrice.HasValue ? lineSum.ToString("N2") : "—")</td>
                                 <td>
-                                    <input type="text" inputmode="decimal" name="Items[@i].ReceivedQuantity" value="@Model.Items[i].ReceivedQuantity.ToString("F1")"
-                                           class="form-control form-control-sm dec-input" style="width:100px" />
+                                    <input type="text" inputmode="decimal" name="Items[@i].ReceivedQuantity"
+                                           value="@Model.Items[i].ReceivedQuantity.ToString(fmt)"
+                                           step="@step" min="0"
+                                           class="form-control form-control-sm dec-input text-end" />
                                 </td>
                             </tr>
                         }
                     </tbody>
+                    <tfoot>
+                        <tr class="fw-bold">
+                            <td colspan="4" class="text-end">Итого к оплате:</td>
+                            <td class="text-end text-success fs-5">@totalSum.ToString("N2")</td>
+                            <td></td>
+                        </tr>
+                    </tfoot>
                 </table>
             </div>
         </div>
-        <div class="card-footer d-flex justify-content-between">
+        <div class="card-footer d-flex justify-content-between align-items-center">
             <a asp-action="Index" class="btn btn-outline-secondary">
                 <i class="bi bi-arrow-left"></i> Назад
             </a>
-            <button type="submit" class="btn btn-success">
-                <i class="bi bi-check2-circle"></i> Подтвердить приёмку
+            <button type="submit" class="btn btn-success btn-lg">
+                <i class="bi bi-check2-circle me-1"></i> Подтвердить приёмку
             </button>
         </div>
     </div>
 </form>
 
+@section Scripts {
 <script>
     document.querySelector('form.decimal-fix')?.addEventListener('submit', function(e) {
         var decs = this.querySelectorAll('.dec-input');
@@ -93,3 +123,4 @@
         }
     });
 </script>
+}
