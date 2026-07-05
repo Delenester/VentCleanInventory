@@ -16,3 +16,6 @@ Thumbs.db
 
 ## Secrets
 appsettings.Production.json
+
+cookies_*.txt
+login_*.html

@@ -1,0 +1,95 @@
+@model VentCleanInventory.Web.Areas.Dispatcher.Models.SupplyRequests.SupplyRequestReceiveViewModel
+
+@{
+    ViewData["Title"] = $"Приёмка по запросу {Model.RequestNumber}";
+}
+
+<div class="page-header d-flex align-items-center gap-2">
+    <a asp-action="Index" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i>
+    </a>
+    <h1 class="m-0">@ViewData["Title"]</h1>
+</div>
+
+<div class="card mb-3">
+    <div class="card-body">
+        <div class="row g-2">
+            <div class="col-md-6">
+                <div class="text-muted small">Поставщик</div>
+                <div class="fw-semibold">@Model.SupplierName</div>
+            </div>
+            <div class="col-md-6">
+                <div class="text-muted small">Номер запроса</div>
+                <div class="fw-semibold">@Model.RequestNumber</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<form asp-action="Receive" asp-route-id="@Model.RequestId" method="post" class="decimal-fix">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="RequestId" />
+    <input type="hidden" asp-for="RequestNumber" />
+    <input type="hidden" asp-for="SupplierName" />
+    <input type="hidden" asp-for="CentralWarehouseId" />
+
+    <div class="card">
+        <div class="card-header"><i class="bi bi-box me-1"></i>Позиции поставки</div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>Наименование</th>
+                            <th>Заказано</th>
+                            <th>Ед.</th>
+                            <th>Цена поставщика</th>
+                            <th>Получено</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (var i = 0; i < Model.Items.Count; i++)
+                        {
+                            <tr>
+                                <td>
+                                    @Model.Items[i].NomenclatureName
+                                    <input type="hidden" name="Items[@i].SupplyRequestItemId" value="@Model.Items[i].SupplyRequestItemId" />
+                                    <input type="hidden" name="Items[@i].NomenclatureId" value="@Model.Items[i].NomenclatureId" />
+                                    <input type="hidden" name="Items[@i].NomenclatureName" value="@Model.Items[i].NomenclatureName" />
+                                    <input type="hidden" name="Items[@i].OrderedQuantity" value="@Model.Items[i].OrderedQuantity" />
+                                    <input type="hidden" name="Items[@i].Unit" value="@Model.Items[i].Unit" />
+                                    <input type="hidden" name="Items[@i].IsEquipment" value="@Model.Items[i].IsEquipment.ToString().ToLower()" />
+                                    <input type="hidden" name="Items[@i].UnitPrice" value="@(Model.Items[i].UnitPrice?.ToString("F2") ?? "")" />
+                                </td>
+                                <td>@Model.Items[i].OrderedQuantity.ToString("N1")</td>
+                                <td>@Model.Items[i].Unit</td>
+                                <td>@(Model.Items[i].UnitPrice?.ToString("N2") ?? "—")</td>
+                                <td>
+                                    <input type="text" inputmode="decimal" name="Items[@i].ReceivedQuantity" value="@Model.Items[i].ReceivedQuantity.ToString("F1")"
+                                           class="form-control form-control-sm dec-input" style="width:100px" />
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="card-footer d-flex justify-content-between">
+            <a asp-action="Index" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Назад
+            </a>
+            <button type="submit" class="btn btn-success">
+                <i class="bi bi-check2-circle"></i> Подтвердить приёмку
+            </button>
+        </div>
+    </div>
+</form>
+
+<script>
+    document.querySelector('form.decimal-fix')?.addEventListener('submit', function(e) {
+        var decs = this.querySelectorAll('.dec-input');
+        for (var i = 0; i < decs.length; i++) {
+            if (decs[i].value) decs[i].value = decs[i].value.replace('.', ',');
+        }
+    });
+</script>

@@ -33,6 +33,8 @@ builder.Services
 builder.Services.AddScoped<VentCleanInventory.Web.Services.StockService>();
 builder.Services.AddScoped<VentCleanInventory.Web.Services.WriteOffActService>();
 builder.Services.AddScoped<VentCleanInventory.Web.Services.BackupService>();
+builder.Services.AddScoped<VentCleanInventory.Web.Services.NotificationService>();
+builder.Services.AddHostedService<VentCleanInventory.Web.Services.BackgroundJobService>();
 
 builder.Services.ConfigureApplicationCookie(options =>
 {
@@ -53,7 +55,7 @@ builder.Services.AddRateLimiter(options =>
 
     options.AddFixedWindowLimiter("api", limiterOptions =>
     {
-        limiterOptions.PermitLimit = 30;
+        limiterOptions.PermitLimit = 120;
         limiterOptions.Window = TimeSpan.FromMinutes(1);
         limiterOptions.QueueLimit = 0;
     });

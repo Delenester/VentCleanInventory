@@ -1,0 +1,132 @@
+@model IEnumerable<VentCleanInventory.Web.Data.Entities.SupplyRequest>
+
+@{
+    ViewData["Title"] = "Запросы на поставку";
+    var page = (int)ViewBag.Page;
+    var totalPages = (int)ViewBag.TotalPages;
+    var total = (int)ViewBag.Total;
+    var filterStatus = ViewBag.FilterStatus as SupplyRequestStatus?;
+    var filterFrom = ViewBag.FilterFrom as DateTime?;
+    var filterTo = ViewBag.FilterTo as DateTime?;
+}
+
+<style>
+    .req-card { border: 1px solid #e9ecef; border-radius: 12px; padding: 1rem; margin-bottom: 0.75rem; background: #fff; }
+    .req-card-header { display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 0.5rem; }
+    .req-card-title { font-weight: 600; color: #212529; }
+    .req-card-meta { font-size: 0.85rem; color: #6c757d; }
+    .req-card-actions { display: flex; gap: 0.5rem; margin-top: 0.75rem; flex-wrap: wrap; }
+</style>
+
+<div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <div class="d-flex align-items-center gap-2">
+        <a asp-area="Supplier" asp-controller="SupplierHome" asp-action="Index" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i>
+        </a>
+        <h1 class="m-0">@ViewData["Title"]</h1>
+    </div>
+    <span class="text-muted small">Всего: @total</span>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle me-2"></i>@TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<form method="get" class="card mb-4">
+    <div class="card-body">
+        <div class="row g-2 align-items-end">
+            <div class="col-6 col-md-3">
+                <label class="form-label small">Статус</label>
+                <select name="status" class="form-select form-select-sm">
+                    <option value="">Все</option>
+                    @foreach (var s in new[] {
+                        (SupplyRequestStatus.Sent, "Ожидает ответа"),
+                        (SupplyRequestStatus.Confirmed, "Подтверждён"),
+                        (SupplyRequestStatus.Partial, "Частично"),
+                        (SupplyRequestStatus.Completed, "Выполнен"),
+                        (SupplyRequestStatus.Cancelled, "Отменён")
+                    })
+                    {
+                        <option value="@((int)s.Item1)" selected="@(filterStatus == s.Item1)">@s.Item2</option>
+                    }
+                </select>
+            </div>
+            <div class="col-6 col-md-3">
+                <label class="form-label small">От</label>
+                <input type="date" name="from" class="form-control form-control-sm" value="@filterFrom?.ToString("yyyy-MM-dd")" />
+            </div>
+            <div class="col-6 col-md-3">
+                <label class="form-label small">До</label>
+                <input type="date" name="to" class="form-control form-control-sm" value="@filterTo?.ToString("yyyy-MM-dd")" />
+            </div>
+            <div class="col-6 col-md-3 d-flex gap-2">
+                <button type="submit" class="btn btn-primary btn-sm flex-fill">Фильтр</button>
+                <a asp-action="Index" class="btn btn-outline-secondary btn-sm flex-fill">Сброс</a>
+            </div>
+        </div>
+    </div>
+</form>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">Нет запросов по заданным фильтрам.</div>
+}
+else
+{
+    @foreach (var r in Model)
+    {
+        <div class="req-card">
+            <div class="req-card-header">
+                <div>
+                    <div class="req-card-title">@r.Number</div>
+                    <div class="req-card-meta">@r.CreatedAt.ToString("dd.MM.yyyy")</div>
+                </div>
+                @switch (r.Status)
+                {
+                    case SupplyRequestStatus.New: <span class="badge bg-warning text-dark">Новый</span> break;
+                    case SupplyRequestStatus.Sent: <span class="badge bg-info text-dark">Ожидает ответа</span> break;
+                    case SupplyRequestStatus.Confirmed: <span class="badge bg-primary">Подтверждён</span> break;
+                    case SupplyRequestStatus.Partial: <span class="badge bg-secondary">Частично</span> break;
+                    case SupplyRequestStatus.Completed: <span class="badge bg-success">Выполнен</span> break;
+                    case SupplyRequestStatus.Cancelled: <span class="badge bg-danger">Отменён</span> break;
+                }
+            </div>
+            <div class="req-card-meta d-flex flex-wrap gap-3">
+                <span><i class="bi bi-box"></i> @r.Items.Count поз.</span>
+            </div>
+            <div class="req-card-actions">
+                <a asp-action="Details" asp-route-id="@r.Id" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-eye"></i> Подробнее
+                </a>
+                @if (r.Status is SupplyRequestStatus.Confirmed or SupplyRequestStatus.Partial or SupplyRequestStatus.Completed)
+                {
+                    <a asp-area="Dispatcher" asp-controller="SupplyContract" asp-action="Export" asp-route-id="@r.Id" class="btn btn-outline-primary btn-sm">
+                        <i class="bi bi-file-earmark-text"></i> Договор
+                    </a>
+                }
+            </div>
+        </div>
+    }
+
+    if (totalPages > 1)
+    {
+        <nav>
+            <ul class="pagination pagination-sm justify-content-center mt-3">
+                @for (int p = 1; p <= totalPages; p++)
+                {
+                    <li class="page-item @(p == page ? "active" : "")">
+                        <a class="page-link" asp-action="Index"
+                           asp-route-status="@filterStatus"
+                           asp-route-from="@filterFrom?.ToString("yyyy-MM-dd")"
+                           asp-route-to="@filterTo?.ToString("yyyy-MM-dd")"
+                           asp-route-page="@p">@p</a>
+                    </li>
+                }
+            </ul>
+        </nav>
+    }
+}

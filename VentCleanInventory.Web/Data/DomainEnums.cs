@@ -60,3 +60,13 @@ public enum OrganizationType
     Supplier = 2,
 }
 
+public enum SupplyRequestStatus
+{
+    New = 1,
+    Sent = 2,
+    Confirmed = 3,
+    Partial = 4,
+    Completed = 5,
+    Cancelled = 6,
+}
+

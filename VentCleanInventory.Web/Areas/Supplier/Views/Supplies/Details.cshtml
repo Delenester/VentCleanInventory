@@ -1,0 +1,75 @@
+@model VentCleanInventory.Web.Areas.Supplier.Models.SupplyDetailViewModel
+
+@{
+    ViewData["Title"] = "Детали поставки";
+}
+
+<div class="page-header d-flex align-items-center gap-2 mb-3">
+    <a asp-action="Index" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i>
+    </a>
+    <h1 class="m-0">@ViewData["Title"]</h1>
+</div>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-4">
+                <strong>Дата:</strong>
+                <p class="mb-0">@Model.Date.ToString("dd.MM.yyyy HH:mm")</p>
+            </div>
+            <div class="col-md-4">
+                <strong>Тип операции:</strong>
+                <p class="mb-0">
+                    @switch (Model.TransactionType)
+                    {
+                        case TransactionType.Receipt: <span class="badge bg-success">Поступление</span> break;
+                        case TransactionType.Return: <span class="badge bg-info">Возврат</span> break;
+                        case TransactionType.Issue: <span class="badge bg-warning">Выдача</span> break;
+                        case TransactionType.WriteOff: <span class="badge bg-danger">Списание</span> break;
+                        case TransactionType.Transfer: <span class="badge bg-secondary">Перемещение</span> break;
+                        default: <span>@Model.TransactionType</span> break;
+                    }
+                </p>
+            </div>
+            <div class="col-md-4">
+                <strong>Примечание:</strong>
+                <p class="mb-0">@(Model.Note ?? "—")</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <h5 class="card-title">Номенклатура</h5>
+        @if (!Model.Items.Any())
+        {
+            <div class="alert alert-info">Нет позиций.</div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>№</th>
+                            <th>Наименование</th>
+                            <th class="text-end">Количество</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (int i = 0; i < Model.Items.Count; i++)
+                        {
+                            <tr>
+                                <td>@(i + 1)</td>
+                                <td>@Model.Items[i].NomenclatureName</td>
+                                <td class="text-end">@Model.Items[i].Quantity.ToString("N1")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>

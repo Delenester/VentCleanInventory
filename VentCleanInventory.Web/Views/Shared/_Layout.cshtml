@@ -66,7 +66,9 @@
                 <a class="nav-item@(ctrl=="Returns"?" active":"")" asp-area="Dispatcher" asp-controller="Returns" asp-action="Index"><i class="bi bi-arrow-counterclockwise"></i>Возвраты</a>
                 <a class="nav-item@(ctrl=="WriteOffActs"?" active":"")" asp-area="Dispatcher" asp-controller="WriteOffActs" asp-action="Index"><i class="bi bi-file-earmark-minus"></i>Списание</a>
                 <a class="nav-item@(ctrl=="Balances"?" active":"")" asp-area="Dispatcher" asp-controller="Balances" asp-action="Index"><i class="bi bi-bar-chart"></i>Остатки</a>
+                <a class="nav-item@(ctrl=="SupplyRequests"?" active":"")" asp-area="Dispatcher" asp-controller="SupplyRequests" asp-action="Index"><i class="bi bi-truck"></i>Поставки</a>
                 <a class="nav-item@(ctrl=="WorkLogs"?" active":"")" asp-area="Dispatcher" asp-controller="WorkLogs" asp-action="Index"><i class="bi bi-clipboard-check"></i>Выполненные работы</a>
+                <a class="nav-item@(ctrl=="Nomenclature"?" active":"")" asp-area="Dispatcher" asp-controller="Nomenclature" asp-action="Index"><i class="bi bi-card-list"></i>Номенклатура</a>
             }
             @if (User.IsInRole("Мастер"))
             {
@@ -118,6 +120,7 @@
             {
                 <div class="menu-heading">Портал</div>
                 <a class="nav-item@(area=="Supplier"&&ctrl=="SupplierHome"?" active":"")" asp-area="Supplier" asp-controller="SupplierHome" asp-action="Index"><i class="bi bi-speedometer2"></i>Главная</a>
+                <a class="nav-item@(ctrl=="SupplyRequests"?" active":"")" asp-area="Supplier" asp-controller="SupplyRequests" asp-action="Index"><i class="bi bi-clipboard-check"></i>Запросы</a>
                 <a class="nav-item@(ctrl=="Supplies"?" active":"")" asp-area="Supplier" asp-controller="Supplies" asp-action="Index"><i class="bi bi-truck"></i>Мои поставки</a>
             }
         </div>

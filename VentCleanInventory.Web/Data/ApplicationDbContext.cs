@@ -17,6 +17,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<DefectReport> DefectReports => Set<DefectReport>();
     public DbSet<Notification> Notifications => Set<Notification>();
     public DbSet<WorkChecklist> WorkChecklists => Set<WorkChecklist>();
+    public DbSet<SupplyRequest> SupplyRequests => Set<SupplyRequest>();
     public DbSet<Feedback> Feedbacks => Set<Feedback>();
 
     protected override void OnModelCreating(ModelBuilder builder)
@@ -56,6 +57,34 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             .Property(x => x.Meters)
             .HasPrecision(18, 2);
 
+        builder.Entity<Nomenclature>()
+            .Property(x => x.MinStockQuantity)
+            .HasPrecision(18, 3);
+
+        builder.Entity<StockTransaction>()
+            .Property(x => x.Area)
+            .HasPrecision(18, 2);
+
+        builder.Entity<StockTransaction>()
+            .Property(x => x.EstimatedCost)
+            .HasPrecision(18, 2);
+
+        builder.Entity<SupplyRequestItem>()
+            .Property(x => x.Quantity)
+            .HasPrecision(18, 3);
+
+        builder.Entity<SupplyRequestItem>()
+            .Property(x => x.ConfirmedQuantity)
+            .HasPrecision(18, 3);
+
+        builder.Entity<SupplyRequestItem>()
+            .Property(x => x.ReceivedQuantity)
+            .HasPrecision(18, 3);
+
+        builder.Entity<SupplyRequestItem>()
+            .Property(x => x.UnitPrice)
+            .HasPrecision(18, 2);
+
         builder.Entity<Organization>()
             .HasIndex(x => new { x.Type, x.Unp })
             .IsUnique()
@@ -83,6 +112,24 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             .HasOne(x => x.Organization)
             .WithMany()
             .HasForeignKey(x => x.OrganizationId)
+            .OnDelete(DeleteBehavior.NoAction);
+
+        builder.Entity<SupplyRequest>()
+            .HasOne(x => x.Organization)
+            .WithMany()
+            .HasForeignKey(x => x.OrganizationId)
+            .OnDelete(DeleteBehavior.NoAction);
+
+        builder.Entity<SupplyRequestItem>()
+            .HasOne(x => x.SupplyRequest)
+            .WithMany(r => r.Items)
+            .HasForeignKey(x => x.SupplyRequestId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<SupplyRequestItem>()
+            .HasOne(x => x.Nomenclature)
+            .WithMany()
+            .HasForeignKey(x => x.NomenclatureId)
             .OnDelete(DeleteBehavior.NoAction);
 
         builder.Entity<Feedback>()

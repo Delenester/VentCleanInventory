@@ -1,0 +1,84 @@
+@model IEnumerable<VentCleanInventory.Web.Data.Entities.SupplyRequest>
+
+@{
+    ViewData["Title"] = "Запросы на поставку";
+    var selected = Context.Request.Query["status"];
+}
+
+<div class="page-header d-flex align-items-center gap-2">
+    <a asp-area="Manager" asp-controller="ManagerHome" asp-action="Index" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i>
+    </a>
+    <h1 class="m-0">@ViewData["Title"]</h1>
+</div>
+
+<div class="content-card">
+    <div class="card-body">
+        <div class="btn-group mb-3 flex-wrap" role="group">
+            <a asp-action="Index" class="btn btn-sm @(string.IsNullOrEmpty(selected) ? "btn-primary" : "btn-outline-secondary")">Все</a>
+            <a asp-action="Index" asp-route-status="1" class="btn btn-sm @(selected == "1" ? "btn-primary" : "btn-outline-secondary")">Новые</a>
+            <a asp-action="Index" asp-route-status="2" class="btn btn-sm @(selected == "2" ? "btn-primary" : "btn-outline-secondary")">Отправлены</a>
+            <a asp-action="Index" asp-route-status="3" class="btn btn-sm @(selected == "3" ? "btn-primary" : "btn-outline-secondary")">Подтверждены</a>
+            <a asp-action="Index" asp-route-status="5" class="btn btn-sm @(selected == "5" ? "btn-primary" : "btn-outline-secondary")">Выполнены</a>
+        </div>
+
+        @if (!Model.Any())
+        {
+            <div class="alert alert-info">Нет запросов на поставку.</div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>№</th>
+                            <th>Дата</th>
+                            <th>Поставщик</th>
+                            <th>Состав</th>
+                            <th>Статус</th>
+                            <th style="width: 80px;">Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var r in Model)
+                        {
+                            <tr>
+                                <td>@r.Number</td>
+                                <td>@r.CreatedAt.ToString("dd.MM.yyyy")</td>
+                                <td>@(r.Organization?.Name ?? "—")</td>
+                                <td>
+                                    <ul class="list-unstyled mb-0">
+                                        @foreach (var i in r.Items)
+                                        {
+                                            <li>@i.Nomenclature?.Name — @i.Quantity.ToString("N1") @i.Nomenclature?.Unit</li>
+                                        }
+                                    </ul>
+                                </td>
+                                <td>
+                                    @switch (r.Status)
+                                    {
+                                        case SupplyRequestStatus.New: <span class="badge bg-warning text-dark">Новый</span> break;
+                                        case SupplyRequestStatus.Sent: <span class="badge bg-info text-dark">Отправлен</span> break;
+                                        case SupplyRequestStatus.Confirmed: <span class="badge bg-primary">Подтверждён</span> break;
+                                        case SupplyRequestStatus.Partial: <span class="badge bg-secondary">Частично</span> break;
+                                        case SupplyRequestStatus.Completed: <span class="badge bg-success">Выполнен</span> break;
+                                        case SupplyRequestStatus.Cancelled: <span class="badge bg-danger">Отменён</span> break;
+                                    }
+                                </td>
+                                <td>
+                                    @if (r.Status is SupplyRequestStatus.Sent or SupplyRequestStatus.Confirmed or SupplyRequestStatus.Partial or SupplyRequestStatus.Completed)
+                                    {
+                                        <a asp-area="Dispatcher" asp-controller="SupplyContract" asp-action="Export" asp-route-id="@r.Id" class="btn btn-sm btn-outline-primary" title="Скачать договор">
+                                            <i class="bi bi-file-earmark-text"></i>
+                                        </a>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>

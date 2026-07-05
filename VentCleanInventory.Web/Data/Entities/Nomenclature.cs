@@ -17,6 +17,13 @@ public class Nomenclature
     [Display(Name = "Оборудование")]
     public bool IsEquipment { get; set; }
 
+    [Display(Name = "Мин. остаток")]
+    public decimal MinStockQuantity { get; set; }
+
+    [Display(Name = "Предпочтительный поставщик")]
+    public int? PreferredSupplierId { get; set; }
+    public Organization? PreferredSupplier { get; set; }
+
     [Display(Name = "Описание")]
     [MaxLength(1000)]
     public string? Description { get; set; }

@@ -1,0 +1,163 @@
+@model VentCleanInventory.Web.Data.Entities.SupplyRequest
+
+@{
+    ViewData["Title"] = $"Запрос {Model.Number}";
+}
+
+<div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <h1 class="m-0">@ViewData["Title"]</h1>
+    <a asp-action="Index" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left"></i> Все запросы
+    </a>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-7">
+        <div class="card h-100">
+            <div class="card-header">Информация о запросе</div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-5">Номер</dt>
+                    <dd class="col-sm-7">@Model.Number</dd>
+
+                    <dt class="col-sm-5">Дата создания</dt>
+                    <dd class="col-sm-7">@Model.CreatedAt.ToString("dd.MM.yyyy HH:mm")</dd>
+
+                    <dt class="col-sm-5">Статус</dt>
+                    <dd class="col-sm-7">
+                        @switch (Model.Status)
+                        {
+                            case SupplyRequestStatus.New: <span class="badge bg-warning text-dark">Новый</span> break;
+                            case SupplyRequestStatus.Sent: <span class="badge bg-info text-dark">Ожидает ответа</span> break;
+                            case SupplyRequestStatus.Confirmed: <span class="badge bg-primary">Подтверждён</span> break;
+                            case SupplyRequestStatus.Partial: <span class="badge bg-secondary">Частично</span> break;
+                            case SupplyRequestStatus.Completed: <span class="badge bg-success">Выполнен</span> break;
+                            case SupplyRequestStatus.Cancelled: <span class="badge bg-danger">Отменён</span> break;
+                        }
+                    </dd>
+
+                    <dt class="col-sm-5">Примечание</dt>
+                    <dd class="col-sm-7">@(Model.Note ?? "—")</dd>
+
+                    <dt class="col-sm-5">Договор поставки</dt>
+                    <dd class="col-sm-7">
+                        @if (Model.Status is SupplyRequestStatus.Sent or SupplyRequestStatus.Confirmed or SupplyRequestStatus.Partial or SupplyRequestStatus.Completed)
+                        {
+                            <a asp-area="Dispatcher" asp-controller="SupplyContract" asp-action="Export" asp-route-id="@Model.Id" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-download"></i> Скачать
+                            </a>
+                        }
+                        else
+                        {
+                            <span class="text-muted">—</span>
+                        }
+                    </dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+        <div class="card h-100">
+            <div class="card-header">Ход выполнения</div>
+            <div class="card-body">
+                <ul class="list-unstyled mb-0">
+                    @{
+                        var steps = new[]
+                        {
+                            (SupplyRequestStatus.New, "Запрос создан", Model.CreatedAt),
+                            (SupplyRequestStatus.Sent, "Отправлен поставщику", Model.CreatedAt),
+                            (SupplyRequestStatus.Confirmed, "Подтверждён поставщиком", (DateTime?)null),
+                            (SupplyRequestStatus.Completed, "Поставка выполнена", (DateTime?)null),
+                        };
+                        var currentStatus = Model.Status;
+                        var currentStep = Array.FindIndex(steps, s => s.Item1 == currentStatus);
+                        if (currentStep < 0) currentStep = steps.Length - 1;
+                    }
+                    @for (int i = 0; i < steps.Length; i++)
+                    {
+                        var isDone = i <= currentStep;
+                        var isCurrent = i == currentStep;
+                        <li class="d-flex align-items-start mb-3 @(isDone ? "" : "opacity-50")">
+                            <div class="me-3 mt-1">
+                                @if (isDone)
+                                {
+                                    <span class="badge bg-@(isCurrent ? "primary" : "success") rounded-circle p-2" style="width:28px;height:28px;">
+                                        @(isCurrent ? "●" : "✓")
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-light text-muted rounded-circle p-2" style="width:28px;height:28px;">○</span>
+                                }
+                            </div>
+                            <div>
+                                <div class="fw-semibold small">@steps[i].Item2</div>
+                            </div>
+                        </li>
+                    }
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card mt-4">
+    <div class="card-header"><i class="bi bi-box me-1"></i>Позиции</div>
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>Наименование</th>
+                    <th>Запрошено</th>
+                    <th>Ед.</th>
+                    @if (Model.Status is SupplyRequestStatus.Confirmed or SupplyRequestStatus.Partial or SupplyRequestStatus.Completed)
+                    {
+                        <th>Подтверждено</th>
+                        <th>Цена</th>
+                    }
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var i in Model.Items)
+                {
+                    <tr>
+                        <td>@(i.Nomenclature?.Name ?? "—")</td>
+                        <td>@i.Quantity.ToString("N1")</td>
+                        <td>@(i.Nomenclature?.Unit ?? "")</td>
+                        @if (Model.Status is SupplyRequestStatus.Confirmed or SupplyRequestStatus.Partial or SupplyRequestStatus.Completed)
+                        {
+                            <td>@(i.ConfirmedQuantity?.ToString("N1") ?? "—")</td>
+                            <td>@(i.UnitPrice?.ToString("N2") ?? "—")</td>
+                        }
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="d-flex gap-2 mt-4 flex-wrap">
+    <a asp-action="Index" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i> Назад
+    </a>
+    @if (Model.Status == SupplyRequestStatus.Sent)
+    {
+        <a asp-action="Confirm" asp-route-id="@Model.Id" class="btn btn-success">
+            <i class="bi bi-check2-circle"></i> Подтвердить с ценами
+        </a>
+        <form asp-action="Cancel" asp-route-id="@Model.Id" method="post" class="d-inline"
+              onsubmit="return confirm('Отклонить запрос №@Model.Number?')">
+            @Html.AntiForgeryToken()
+            <button type="submit" class="btn btn-outline-danger">
+                <i class="bi bi-x-circle"></i> Отклонить
+            </button>
+        </form>
+    }
+    @if (Model.Status is SupplyRequestStatus.Sent or SupplyRequestStatus.Confirmed or SupplyRequestStatus.Partial or SupplyRequestStatus.Completed)
+    {
+        <a asp-area="Dispatcher" asp-controller="SupplyContract" asp-action="Export" asp-route-id="@Model.Id" class="btn btn-primary">
+            <i class="bi bi-file-earmark-text"></i> Скачать договор
+        </a>
+    }
+</div>

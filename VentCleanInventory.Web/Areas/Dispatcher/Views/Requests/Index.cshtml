@@ -61,14 +61,14 @@ else
                             <a class="btn btn-outline-secondary btn-sm" asp-action="Details" asp-route-id="@r.Id">
                                 <i class="bi bi-eye me-1"></i>Открыть
                             </a>
-                            @if (r.Status == VentCleanInventory.Web.Data.RequestStatus.New)
+                            @if (r.Status == VentCleanInventory.Web.Data.RequestStatus.New
+                                || r.Status == VentCleanInventory.Web.Data.RequestStatus.ClientConfirmed)
                             {
                                 <a class="btn btn-primary btn-sm" asp-action="Issue" asp-route-id="@r.Id">
                                     <i class="bi bi-box-arrow-up me-1"></i>Выдать
                                 </a>
                             }
-                            @if (r.Status == VentCleanInventory.Web.Data.RequestStatus.ClientConfirmed
-                                || r.Status == VentCleanInventory.Web.Data.RequestStatus.Assigned
+                            @if (r.Status == VentCleanInventory.Web.Data.RequestStatus.Assigned
                                 || r.Status == VentCleanInventory.Web.Data.RequestStatus.InProgress)
                             {
                                 <form asp-action="CompleteWork" method="post" class="d-inline">

@@ -1,0 +1,129 @@
+@model VentCleanInventory.Web.Areas.Supplier.Models.SupplyRequestConfirmViewModel
+
+@{
+    ViewData["Title"] = $"Подтверждение запроса {Model.RequestNumber}";
+}
+
+<div class="page-header d-flex align-items-center gap-2">
+    <a asp-action="Index" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i>
+    </a>
+    <h1 class="m-0">@ViewData["Title"]</h1>
+</div>
+
+<div class="card mb-3">
+    <div class="card-body">
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle me-2"></i>
+            Укажите цены и количество, которое можете поставить. Поля с ценой обязательны.
+        </div>
+    </div>
+</div>
+
+<form asp-action="Confirm" asp-route-id="@Model.RequestId" method="post" class="decimal-fix">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="RequestId" />
+    <input type="hidden" asp-for="RequestNumber" />
+
+    <div class="card">
+        <div class="card-header"><i class="bi bi-cart me-1"></i>Позиции</div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>Наименование</th>
+                            <th>Запрошено</th>
+                            <th>Ед.</th>
+                            <th>Поставляю</th>
+                            <th>Цена за ед.</th>
+                            <th>Примечание</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (var i = 0; i < Model.Items.Count; i++)
+                        {
+                            <tr>
+                                <td>
+                                    @Model.Items[i].NomenclatureName
+                                    <input type="hidden" name="Items[@i].SupplyRequestItemId" value="@Model.Items[i].SupplyRequestItemId" />
+                                    <input type="hidden" name="Items[@i].NomenclatureName" value="@Model.Items[i].NomenclatureName" />
+                                    <input type="hidden" name="Items[@i].OrderedQuantity" value="@Model.Items[i].OrderedQuantity" />
+                                    <input type="hidden" name="Items[@i].Unit" value="@Model.Items[i].Unit" />
+                                </td>
+                                <td>@Model.Items[i].OrderedQuantity.ToString("N1")</td>
+                                <td>@Model.Items[i].Unit</td>
+                                <td>
+                                    <input type="text" inputmode="decimal" name="Items[@i].ConfirmedQuantity" value="@Model.Items[i].ConfirmedQuantity.ToString("F1")"
+                                           class="form-control form-control-sm dec-input" style="width:90px" />
+                                    <div class="text-danger small" style="display:none" id="qty-warn-@i">Не больше @Model.Items[i].OrderedQuantity.ToString("F1")</div>
+                                </td>
+                                <td>
+                                    <input type="text" inputmode="decimal" name="Items[@i].UnitPrice" value=""
+                                           class="form-control form-control-sm dec-input" style="width:110px" required />
+                                </td>
+                                <td>
+                                    <input type="text" name="Items[@i].Note" value="@(Model.Items[i].Note ?? "")"
+                                           class="form-control form-control-sm" style="width:150px" />
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="card-footer">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-6">
+                    <label asp-for="Note" class="form-label"></label>
+                    <textarea asp-for="Note" class="form-control" rows="2" style="max-width:400px"></textarea>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-check2-circle"></i> Подтвердить
+                    </button>
+                    <a asp-action="Index" class="btn btn-outline-secondary">Отмена</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+<script>
+    function parseDec(v) { return parseFloat((v || '').replace(',', '.')); }
+
+    document.querySelector('form.decimal-fix').addEventListener('submit', function(e) {
+        var decs = this.querySelectorAll('.dec-input');
+        for (var i = 0; i < decs.length; i++) {
+            if (decs[i].value) decs[i].value = decs[i].value.replace('.', ',');
+        }
+    });
+    @for (var i = 0; i < Model.Items.Count; i++)
+    {
+        var max = Model.Items[i].OrderedQuantity;
+        <text>
+        (function() {
+            var inp = document.querySelector('input[name="Items[@i].ConfirmedQuantity"]');
+            if (inp) {
+                inp.addEventListener('input', function() {
+                    var warn = document.getElementById('qty-warn-@i');
+                    if (parseDec(this.value) > @max.ToString("F1").Replace(",", ".")) {
+                        this.classList.add('is-invalid');
+                        if (warn) warn.style.display = 'block';
+                    } else {
+                        this.classList.remove('is-invalid');
+                        if (warn) warn.style.display = 'none';
+                    }
+                });
+                inp.closest('form').addEventListener('submit', function(e) {
+                    if (parseDec(inp.value) > @max.ToString("F1").Replace(",", ".")) {
+                        e.preventDefault();
+                        inp.classList.add('is-invalid');
+                        if (warn) warn.style.display = 'block';
+                    }
+                });
+            }
+        })();
+        </text>
+    }
+</script>
